@@ -107,14 +107,9 @@ public class GPSMerge extends JFrame
 		{
 			public void actionPerformed(ActionEvent action)
 			{
-				// TODO Filter out button clicks
 				textFieldSourceFolder.setText(obtainFolderPathname(textFieldSourceFolder.getText()));
 
-				File srcFile = new File(textFieldSourceFolder.getText());
-
-				File[] files = srcFile.listFiles(new PictureFileFilter());
-
-				lblSourceInfo.setText("Folder contains " + files.length + " photo files.");
+				updateDirectoryPhotoCount(textFieldSourceFolder, lblSourceInfo);
 			}
 		});
 
@@ -162,16 +157,9 @@ public class GPSMerge extends JFrame
 			{
 				textFieldTargetFolder.setText(obtainFolderPathname(textFieldTargetFolder.getText()));
 
-				File tgtFile = new File(textFieldSourceFolder.getText());
-
-				File[] files = tgtFile.listFiles(new PictureFileFilter());
-				int fileCount = 0;
-				if (files != null)
-				{
-					fileCount = files.length;
-				}
-				lblTargetInfo.setText("Folder contains " + fileCount + " photo files.");
+				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
 			}
+
 		});
 
 		JLabel lblCameraTimezone = new JLabel("Camera TZ:");
@@ -197,14 +185,18 @@ public class GPSMerge extends JFrame
 				String cameraTimezone = comboBoxTZ.getSelectedItem().toString();
 				MergeProcessor.updateSourceFilesWithTrackData(gpxTrackFileName, photoDirectoryPath, targetDirectoryName,
 						cameraTimezone, false);
+
+				// After the update, it is likely that additional files were written to
+				// the target folder. Update the count that shows on the UI.
+				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
 			}
 		});
 
-		lblSourceInfo = new JLabel("xxx");
+		lblSourceInfo = new JLabel("");
 
-		lblGPXInfo = new JLabel("xxx");
+		lblGPXInfo = new JLabel("");
 
-		lblTargetInfo = new JLabel("xxx");
+		lblTargetInfo = new JLabel("");
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
 		gl_contentPane.setHorizontalGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup()
@@ -274,6 +266,19 @@ public class GPSMerge extends JFrame
 		setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]
 		{ textFieldSourceFolder, btnBrowseSrcFolder, textFieldGPXFile, btnBrowseGPXFile, textFieldTargetFolder,
 				btnBrowseTargetFolder, comboBoxTZ, btnMergeGpsLocations }));
+	}
+
+	private void updateDirectoryPhotoCount(JTextField textFieldFolderName, JLabel lblInfo)
+	{
+		File tgtFile = new File(textFieldFolderName.getText());
+
+		File[] files = tgtFile.listFiles(new PictureFileFilter());
+		int fileCount = 0;
+		if (files != null)
+		{
+			fileCount = files.length;
+		}
+		lblInfo.setText("Folder contains " + fileCount + " photo files.");
 	}
 
 	protected String obtainFolderPathname(String previous)
