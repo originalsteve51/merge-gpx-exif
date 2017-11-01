@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Apache Commons Imaging Examples"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Imaging Test"/>
+	<classpathentry kind="lib" path="C:/devTools/apache-commons-imaging/commons-imaging-1.0-20170517.221134-118.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="jar:file:/C:/devTools/apache-commons-imaging/commons-imaging-1.0-20170517.221134-118-javadoc.jar!/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

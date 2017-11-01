@@ -1,0 +1,10 @@
+Instant inst = Instant.parse("2017-10-20T17:12:21.539Z");
+   ZoneId z = ZoneId.of( "America/Montreal" );ZonedDateTime zdt = inst.atZone( z );
+DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+LocalDateTime ldt = LocalDateTime.parse("2017-10-20 13:12:21", dtf);
+ZonedDateTime localZonedTime = ldt.atZone(z);
+System.out.println(zdt.toInstant() + " - - - - "+localZonedTime.toInstant());
+
+DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+LocalDateTime localTimeTaken = LocalDateTime.parse("2017:10:20 13:08:22", dtf);
+System.out.println(localTimeTaken);
