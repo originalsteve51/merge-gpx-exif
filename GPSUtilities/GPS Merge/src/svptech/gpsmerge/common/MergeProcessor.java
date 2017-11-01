@@ -22,6 +22,12 @@ import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
 import svptech.imaging.utils.ImageManipulationUtils;
 
+/**
+ * Static methods are provided to merge of waypoint data from a GPX file to a
+ * set of photo files defined by the content of a source directory. 
+ * @author Steve Harding
+ *
+ */
 public class MergeProcessor
 {
 	public static void updateSourceFilesWithTrackData(String gpxTrackFileName, String photoDirectoryPath,
@@ -70,8 +76,11 @@ public class MergeProcessor
 				System.err.println("No photo files were found in the source directory : " + photoDirectoryPath);
 				System.exit(-3);
 			}
-			System.out.println("The directory contains " + sourceFiles.length + " photos");
-
+			if (debug)
+			{
+				System.out.println("The directory contains " + sourceFiles.length + " photos");
+			}
+			
 			// Photo timestamps will be considered to be relative to the timezone used when
 			// the time
 			// was set for the camera. Call this 'Camera Standard Time'.
