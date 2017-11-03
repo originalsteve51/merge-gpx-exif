@@ -31,6 +31,8 @@ import svptech.gpsmerge.common.MergeProcessor;
 import svptech.gpsmerge.common.PictureFileFilter;
 import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 /**
  * Use the main() entry point in this class to display a Swing UI front-end for
@@ -100,6 +102,14 @@ public class GPSMerge extends JFrame
 		JLabel lblSourceFolder = new JLabel("Source folder:");
 
 		textFieldSourceFolder = new JTextField();
+		textFieldSourceFolder.addFocusListener(new FocusAdapter()
+		{
+			@Override
+			public void focusLost(FocusEvent arg0)
+			{
+				updateDirectoryPhotoCount(textFieldSourceFolder, lblSourceInfo);
+			}
+		});
 		textFieldSourceFolder.setColumns(10);
 
 		JButton btnBrowseSrcFolder = new JButton("Browse");
@@ -116,6 +126,14 @@ public class GPSMerge extends JFrame
 		JLabel lblGpxFile = new JLabel("GPX file:");
 
 		textFieldGPXFile = new JTextField();
+		textFieldGPXFile.addFocusListener(new FocusAdapter()
+		{
+			@Override
+			public void focusLost(FocusEvent e)
+			{
+				updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
+			}
+		});
 		textFieldGPXFile.setColumns(10);
 
 		JButton btnBrowseGPXFile = new JButton("Browse");
@@ -123,31 +141,23 @@ public class GPSMerge extends JFrame
 		{
 			public void actionPerformed(ActionEvent action)
 			{
-				// TODO Filter out button clicks
 				textFieldGPXFile.setText(obtainFilePathname(textFieldGPXFile.getText()));
 
-				GPXFileReader gpxFile;
-				List<GPSLocation> waypoints;
-				String gpxStatus = "";
-				try
-				{
-					gpxFile = new GPXFileReader(new File(textFieldGPXFile.getText()), false);
-					waypoints = gpxFile.getGPXFileLocations();
-					gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
-				} catch (FileNotFoundException | XMLStreamException e)
-				{
-					// File problem of some kind. Provide an error message and tell user to retry.
-					gpxStatus = "Problem reading GPX file. Select another file.";
-				}
-
-				lblGPXInfo.setText(gpxStatus);
-
+				updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
 			}
 		});
 
 		JLabel lblTargetFolder = new JLabel("Target folder:");
 
 		textFieldTargetFolder = new JTextField();
+		textFieldTargetFolder.addFocusListener(new FocusAdapter()
+		{
+			@Override
+			public void focusLost(FocusEvent e)
+			{
+				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
+			}
+		});
 		textFieldTargetFolder.setColumns(10);
 
 		JButton btnBrowseTargetFolder = new JButton("Browse");
@@ -266,6 +276,25 @@ public class GPSMerge extends JFrame
 		setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]
 		{ textFieldSourceFolder, btnBrowseSrcFolder, textFieldGPXFile, btnBrowseGPXFile, textFieldTargetFolder,
 				btnBrowseTargetFolder, comboBoxTZ, btnMergeGpsLocations }));
+	}
+
+	protected void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel)
+	{
+		GPXFileReader gpxFile;
+		List<GPSLocation> waypoints;
+		String gpxStatus = "";
+		try
+		{
+			gpxFile = new GPXFileReader(new File(gpxFileField.getText()), false);
+			waypoints = gpxFile.getGPXFileLocations();
+			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
+		} catch (FileNotFoundException | XMLStreamException e)
+		{
+			// File problem of some kind. Provide an error message and tell user to retry.
+			gpxStatus = "Problem reading GPX file. Select another file.";
+		}
+
+		gpxInfoLabel.setText(gpxStatus);
 	}
 
 	private void updateDirectoryPhotoCount(JTextField textFieldFolderName, JLabel lblInfo)
