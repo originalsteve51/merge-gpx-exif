@@ -3,6 +3,7 @@ package svptech.gpsmerge.location;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -221,6 +222,25 @@ public class GPXFileReader
 			}
 		}
 		throw new XMLStreamException("Premature end of file");
+	}
+
+	/**
+	 * Close resources, should call this from finally one of these GPXFileReaders
+	 * goes out of scope.
+	 */
+	public void close()
+	{
+		try
+		{
+			if (gpxFileStream != null)
+			{
+				gpxFileStream.close();
+			}
+		} catch (IOException e)
+		{
+			System.err.println("Unexpected Exception closing GPXFileReader.");
+			e.printStackTrace();
+		}
 	}
 
 }
