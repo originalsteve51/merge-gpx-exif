@@ -4,10 +4,21 @@ import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.stream.Stream;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
@@ -17,6 +28,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.LayoutStyle.ComponentPlacement;
@@ -31,8 +43,8 @@ import svptech.gpsmerge.common.MergeProcessor;
 import svptech.gpsmerge.common.PictureFileFilter;
 import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeEvent;
 
 /**
  * Use the main() entry point in this class to display a Swing UI front-end for
@@ -57,6 +69,12 @@ public class GPSMerge extends JFrame
 	private JLabel lblSourceInfo;
 	private JLabel lblGPXInfo;
 	private JLabel lblTargetInfo;
+	private JButton btnBrowseSrcFolder;
+	private JButton btnBrowseGPXFile;
+	private JButton btnBrowseTargetFolder;
+	private JButton btnMergeGpsLocations;
+	private JComboBox<String> comboBoxTZ;
+	private JLabel projectedMergeCount;
 
 	/**
 	 * Launch the application.
@@ -91,6 +109,12 @@ public class GPSMerge extends JFrame
 	 */
 	public GPSMerge()
 	{
+		initComponents();
+		createEvents();
+	}
+
+	private void initComponents()
+	{
 		setTitle("GPSMerge");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(1450, 900);
@@ -102,75 +126,26 @@ public class GPSMerge extends JFrame
 		JLabel lblSourceFolder = new JLabel("Source folder:");
 
 		textFieldSourceFolder = new JTextField();
-		textFieldSourceFolder.addFocusListener(new FocusAdapter()
-		{
-			@Override
-			public void focusLost(FocusEvent arg0)
-			{
-				updateDirectoryPhotoCount(textFieldSourceFolder, lblSourceInfo);
-			}
-		});
+		textFieldSourceFolder.setText("C:\\dev\\GPSMerge\\TestData\\Test Photo Directory\\HudsonWalkway2017");
 		textFieldSourceFolder.setColumns(10);
 
-		JButton btnBrowseSrcFolder = new JButton("Browse");
-		btnBrowseSrcFolder.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent action)
-			{
-				textFieldSourceFolder.setText(obtainFolderPathname(textFieldSourceFolder.getText()));
-
-				updateDirectoryPhotoCount(textFieldSourceFolder, lblSourceInfo);
-			}
-		});
+		btnBrowseSrcFolder = new JButton("Browse");
 
 		JLabel lblGpxFile = new JLabel("GPX file:");
 
 		textFieldGPXFile = new JTextField();
-		textFieldGPXFile.addFocusListener(new FocusAdapter()
-		{
-			@Override
-			public void focusLost(FocusEvent e)
-			{
-				updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
-			}
-		});
+		textFieldGPXFile.setText("C:\\dev\\GPSMerge\\TestData\\Track005.gpx");
 		textFieldGPXFile.setColumns(10);
 
-		JButton btnBrowseGPXFile = new JButton("Browse");
-		btnBrowseGPXFile.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent action)
-			{
-				textFieldGPXFile.setText(obtainFilePathname(textFieldGPXFile.getText()));
-
-				updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
-			}
-		});
+		btnBrowseGPXFile = new JButton("Browse");
 
 		JLabel lblTargetFolder = new JLabel("Target folder:");
 
 		textFieldTargetFolder = new JTextField();
-		textFieldTargetFolder.addFocusListener(new FocusAdapter()
-		{
-			@Override
-			public void focusLost(FocusEvent e)
-			{
-				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
-			}
-		});
+		textFieldTargetFolder.setText("c:\\dev\\GPSMerge");
 		textFieldTargetFolder.setColumns(10);
 
-		JButton btnBrowseTargetFolder = new JButton("Browse");
-		btnBrowseTargetFolder.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				textFieldTargetFolder.setText(obtainFolderPathname(textFieldTargetFolder.getText()));
-
-				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
-			}
-
-		});
+		btnBrowseTargetFolder = new JButton("Browse");
 
 		JLabel lblCameraTimezone = new JLabel("Camera TZ:");
 		lblCameraTimezone.setToolTipText(
@@ -178,39 +153,25 @@ public class GPSMerge extends JFrame
 
 		String[] ids = TimeZone.getAvailableIDs();
 		DefaultComboBoxModel<String> cbTZModel = new DefaultComboBoxModel<String>(ids);
-		JComboBox<String> comboBoxTZ = new JComboBox<String>(cbTZModel);
+		comboBoxTZ = new JComboBox<String>(cbTZModel);
 
 		// Default to America/New_York, this will almost always be the case.
 		String defaultTZ = "America/New_York";
 		comboBoxTZ.setSelectedItem(defaultTZ);
 
-		JButton btnMergeGpsLocations = new JButton("Merge GPS Locations");
-		btnMergeGpsLocations.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				String gpxTrackFileName = textFieldGPXFile.getText();
-				String photoDirectoryPath = textFieldSourceFolder.getText();
-				String targetDirectoryName = textFieldTargetFolder.getText();
-				String cameraTimezone = comboBoxTZ.getSelectedItem().toString();
-				MergeProcessor.updateSourceFilesWithTrackData(gpxTrackFileName, photoDirectoryPath, targetDirectoryName,
-						cameraTimezone, false);
-
-				// After the update, it is likely that additional files were written to
-				// the target folder. Update the count that shows on the UI.
-				updateDirectoryPhotoCount(textFieldTargetFolder, lblTargetInfo);
-			}
-		});
+		btnMergeGpsLocations = new JButton("Merge GPS Locations");
 
 		lblSourceInfo = new JLabel("");
 
 		lblGPXInfo = new JLabel("");
 
 		lblTargetInfo = new JLabel("");
+
+		projectedMergeCount = new JLabel(" ");
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
-		gl_contentPane.setHorizontalGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-				.addGroup(gl_contentPane.createSequentialGroup()
-						.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING).addGroup(gl_contentPane
+		gl_contentPane.setHorizontalGroup(gl_contentPane.createParallelGroup(Alignment.LEADING).addGroup(gl_contentPane
+				.createSequentialGroup().addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
+						.addGroup(gl_contentPane
 								.createSequentialGroup().addGap(30).addGroup(
 										gl_contentPane.createParallelGroup(Alignment.LEADING).addComponent(
 												lblCameraTimezone, Alignment.TRAILING)
@@ -237,17 +198,19 @@ public class GPSMerge extends JFrame
 																GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
 												.addPreferredGap(ComponentPlacement.UNRELATED)
 												.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-														.addComponent(lblSourceInfo, GroupLayout.DEFAULT_SIZE,
-																GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+														.addComponent(lblSourceInfo, GroupLayout.DEFAULT_SIZE, 39,
+																Short.MAX_VALUE)
 														.addComponent(lblGPXInfo, GroupLayout.DEFAULT_SIZE, 39,
 																Short.MAX_VALUE)
 														.addComponent(lblTargetInfo, GroupLayout.DEFAULT_SIZE, 39,
 																Short.MAX_VALUE)))
 										.addComponent(comboBoxTZ, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 												GroupLayout.PREFERRED_SIZE)))
-								.addGroup(gl_contentPane.createSequentialGroup().addGap(297)
-										.addComponent(btnMergeGpsLocations)))
-						.addGap(553)));
+						.addGroup(
+								gl_contentPane.createSequentialGroup().addGap(297).addComponent(btnMergeGpsLocations)))
+				.addGap(553))
+				.addGroup(gl_contentPane.createSequentialGroup().addGap(371).addComponent(projectedMergeCount)
+						.addContainerGap(922, Short.MAX_VALUE)));
 		gl_contentPane.setVerticalGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup().addContainerGap()
 						.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING).addComponent(lblSourceFolder)
@@ -271,43 +234,116 @@ public class GPSMerge extends JFrame
 						.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING).addComponent(lblCameraTimezone)
 								.addComponent(comboBoxTZ, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE,
 										GroupLayout.PREFERRED_SIZE))
-						.addGap(69).addComponent(btnMergeGpsLocations).addContainerGap(432, Short.MAX_VALUE)));
+						.addPreferredGap(ComponentPlacement.UNRELATED).addComponent(projectedMergeCount).addGap(8)
+						.addComponent(btnMergeGpsLocations).addContainerGap(432, Short.MAX_VALUE)));
 		contentPane.setLayout(gl_contentPane);
 		setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]
 		{ textFieldSourceFolder, btnBrowseSrcFolder, textFieldGPXFile, btnBrowseGPXFile, textFieldTargetFolder,
 				btnBrowseTargetFolder, comboBoxTZ, btnMergeGpsLocations }));
+
 	}
 
-	protected void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel)
+	private void createEvents()
 	{
-		GPXFileReader gpxFile;
-		List<GPSLocation> waypoints;
-		String gpxStatus = "";
-		try
+		MergeProcessor mp = new MergeProcessor(comboBoxTZ.getSelectedItem().toString());
+		textFieldSourceFolder.addFocusListener(new FocusAdapter()
 		{
-			gpxFile = new GPXFileReader(new File(gpxFileField.getText()), false);
-			waypoints = gpxFile.getGPXFileLocations();
-			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
-		} catch (FileNotFoundException | XMLStreamException e)
+			@Override
+			public void focusLost(FocusEvent arg0)
+			{
+				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+			}
+		});
+		btnBrowseSrcFolder.addActionListener(new ActionListener()
 		{
-			// File problem of some kind. Provide an error message and tell user to retry.
-			gpxStatus = "Problem reading GPX file. Select another file.";
-		}
+			@Override
+			public void actionPerformed(ActionEvent action)
+			{
+				textFieldSourceFolder.setText(obtainFolderPathname(textFieldSourceFolder.getText()));
 
-		gpxInfoLabel.setText(gpxStatus);
-	}
+				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+			}
+		});
 
-	private void updateDirectoryPhotoCount(JTextField textFieldFolderName, JLabel lblInfo)
-	{
-		File tgtFile = new File(textFieldFolderName.getText());
-
-		File[] files = tgtFile.listFiles(new PictureFileFilter());
-		int fileCount = 0;
-		if (files != null)
+		textFieldGPXFile.addFocusListener(new FocusAdapter()
 		{
-			fileCount = files.length;
-		}
-		lblInfo.setText("Folder contains " + fileCount + " photo files.");
+			@Override
+			public void focusLost(FocusEvent e)
+			{
+				mp.updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
+			}
+		});
+
+		btnBrowseGPXFile.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent action)
+			{
+				textFieldGPXFile.setText(obtainFilePathname(textFieldGPXFile.getText()));
+
+				mp.updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo);
+			}
+
+		});
+
+		btnBrowseTargetFolder.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				textFieldTargetFolder.setText(obtainFolderPathname(textFieldTargetFolder.getText()));
+
+				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+			}
+
+		});
+
+		comboBoxTZ.addFocusListener(new FocusAdapter()
+		{
+			@Override
+			public void focusLost(FocusEvent e)
+			{
+				System.out.println("Timezone selection may have changed.");
+				String timezoneString = ((JComboBox<String>) e.getSource()).getSelectedItem().toString();
+				System.out.println("Timezone is now: " + timezoneString);
+				
+				// Push the change over to the MergeProcessor class, which needs to know the camera 
+				// timezone when it converts camera times on the photos to GMT, which is what the GPX
+				// file uses.
+				mp.setCameraTimezone(timezoneString);
+			}
+		});
+
+		btnMergeGpsLocations.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				String gpxTrackFileName = textFieldGPXFile.getText();
+				String photoDirectoryPath = textFieldSourceFolder.getText();
+				String targetDirectoryName = textFieldTargetFolder.getText();
+				String cameraTimezone = comboBoxTZ.getSelectedItem().toString();
+
+				if (gpxTrackFileName.length() == 0 || photoDirectoryPath.length() == 0
+						|| targetDirectoryName.length() == 0 || cameraTimezone.length() == 0)
+				{
+					JOptionPane.showMessageDialog(null,
+							"You need to enter data in all fields before a merge can be performed.");
+				} else
+				{
+					MergeProcessor.updateSourceFilesWithTrackData(gpxTrackFileName, photoDirectoryPath,
+							targetDirectoryName, cameraTimezone, false);
+
+					// After the update, it is likely that additional files were written to
+					// the target folder. Update the count that shows on the UI.
+					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+							textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+				}
+			}
+		});
+
 	}
 
 	protected String obtainFolderPathname(String previous)
