@@ -365,24 +365,21 @@ public class MergeProcessor
 		gpxInfoLabel.setText(gpxStatus);
 	}
 
-	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname, JLabel lblTargetInfo, JLabel projectedMergeCount)
+	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname, JLabel lblSourceInfo, JLabel lblTargetInfo, JLabel projectedMergeCount)
 	{
-		File tgtFile = new File(targetDirectoryPathname);
 
-		File[] files = tgtFile.listFiles(new PictureFileFilter());
-		int fileCount = 0;
-		if (files != null)
-		{
-			fileCount = files.length;
-		}
-		lblTargetInfo.setText("Folder contains " + fileCount + " photo files.");
+		int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
+		lblSourceInfo.setText("Folder contains " + srcFileCount + " photo files.");
+
+		int tgtFileCount = countFilesInDirectory(targetDirectoryPathname);
+		lblTargetInfo.setText("Folder contains " + tgtFileCount + " photo files.");
 
 		// When there is a source directory and there is a gpx file, count how many
 		// source photos will be mapped
 		// when a merge is performed. Put this information on the window for the user.
 		try
 		{
-			if (fileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
+			if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
 			{
 				// See how many will merge and place the message in the label named
 				// projectedMergeCount
@@ -390,7 +387,7 @@ public class MergeProcessor
 				// based on timestamp overlap
 				// between the photos and the waypoints
 				int wpcount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
-				String projectedAction = "There are " + fileCount + " source photo files and " + wpcount
+				String projectedAction = "There are " + srcFileCount + " source photo files and " + wpcount
 						+ " waypoints.";
 				projectedMergeCount.setText(projectedAction);
 			} else
@@ -402,6 +399,19 @@ public class MergeProcessor
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private int countFilesInDirectory(String targetDirectoryPathname)
+	{
+		File tgtFile = new File(targetDirectoryPathname);
+
+		File[] files = tgtFile.listFiles(new PictureFileFilter());
+		int fileCount = 0;
+		if (files != null)
+		{
+			fileCount = files.length;
+		}
+		return fileCount;
 	}
 
 	public String getCameraTimezone()
