@@ -252,7 +252,7 @@ public class GPSMerge extends JFrame
 			public void focusLost(FocusEvent arg0)
 			{
 				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+						textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
 			}
 		});
 		btnBrowseSrcFolder.addActionListener(new ActionListener()
@@ -263,7 +263,7 @@ public class GPSMerge extends JFrame
 				textFieldSourceFolder.setText(obtainFolderPathname(textFieldSourceFolder.getText()));
 
 				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+						textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
 			}
 		});
 
@@ -296,7 +296,7 @@ public class GPSMerge extends JFrame
 				textFieldTargetFolder.setText(obtainFolderPathname(textFieldTargetFolder.getText()));
 
 				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-						textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+						textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
 			}
 
 		});
@@ -339,7 +339,7 @@ public class GPSMerge extends JFrame
 					// After the update, it is likely that additional files were written to
 					// the target folder. Update the count that shows on the UI.
 					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-							textFieldGPXFile.getText(), lblTargetInfo, projectedMergeCount);
+							textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
 				}
 			}
 		});
