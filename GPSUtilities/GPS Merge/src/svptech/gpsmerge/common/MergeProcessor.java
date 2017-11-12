@@ -28,6 +28,7 @@ import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 
 import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
+import svptech.gpsmerge.views.MergeMapView;
 import svptech.imaging.utils.ImageManipulationUtils;
 
 /**
@@ -48,8 +49,8 @@ public class MergeProcessor
 		this.cameraTimezone = cameraTimezone;
 	}
 
-	
-	private Comparator<GPSLocation> waypointComparator = (p1, p2) -> p1.getLocationTime()
+			
+	public Comparator<GPSLocation> waypointComparator = (p1, p2) -> p1.getLocationTime()
 			.compareTo(p2.getLocationTime());
 
 	private Comparator<File> photoFileComparator = (p1, p2) ->
@@ -310,7 +311,7 @@ public class MergeProcessor
 	 *            Comparator that can determine the earliest of two T instances.
 	 * @return
 	 */
-	private <T> List<T> getFirstLast(List<T> aList, Comparator<T> comp)
+	public <T> List<T> getFirstLast(List<T> aList, Comparator<T> comp)
 	{
 		List<T> firstLast = new ArrayList<T>();
 
@@ -349,13 +350,14 @@ public class MergeProcessor
 		return waypoints.size();
 	}
 
-	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel)
+	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel, MergeMapView theMapView)
 	{
 		String gpxStatus = "";
 		try
 		{
 			List<GPSLocation> waypoints = getWaypointsFromFile(gpxFileField.getText());
 			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
+			theMapView.scaleToContainWaypoints(waypoints);
 		} catch (FileNotFoundException | XMLStreamException e)
 		{
 			// File problem of some kind. Provide an error message and tell user to retry.
