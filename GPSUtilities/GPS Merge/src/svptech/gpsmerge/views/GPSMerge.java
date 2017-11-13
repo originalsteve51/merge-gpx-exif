@@ -346,7 +346,7 @@ public class GPSMerge extends JFrame
 				} else
 				{
 					MergeProcessor.updateSourceFilesWithTrackData(gpxTrackFileName, photoDirectoryPath,
-							targetDirectoryName, cameraTimezone, false);
+							targetDirectoryName, cameraTimezone, false, theMapView);
 
 					// After the update, it is likely that additional files were written to
 					// the target folder. Update the count that shows on the UI.

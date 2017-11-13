@@ -83,7 +83,7 @@ public class MergeProcessor
 	};
 
 	public static void updateSourceFilesWithTrackData(String gpxTrackFileName, String photoDirectoryPath,
-			String targetDirectoryName, String cameraTimezone, boolean debug)
+			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView)
 	{
 		// Make sure the target directory ends with a / character (required later on)
 		if (!targetDirectoryName.endsWith("/"))
@@ -148,7 +148,9 @@ public class MergeProcessor
 			// or not.
 			// The string "yyyy:MM:dd HH:mm:ss" is what my Nikon D500 uses.
 			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-
+			
+			List<GPSLocation> targetPhotoGPSList = new ArrayList<>();
+			
 			for (File photoFile : sourceFiles)
 			{
 				// Obtain the camera standard time from the exif data. Capture it in a
@@ -188,9 +190,19 @@ public class MergeProcessor
 					// from the closest point in the gpx file
 					ImageManipulationUtils.setExifGPSTag(photoFile, new File(targetDirectoryName + photoFile.getName()),
 							lastPoint.getLongitude(), lastPoint.getLatitude());
+					
+					// Add to the list of files changed
+					GPSLocation photolocn = new GPSLocation(takenInstant.toString(), lastPoint.getLatitude(), lastPoint.getLongitude());
+					targetPhotoGPSList.add(photolocn);
+					
 				} else
 				{
 					System.err.println("No close points for the picture taken at time " + takenInstant);
+				}
+				
+				if (targetPhotoGPSList.size()>0)
+				{
+					theMapView.scaleToContainWaypoints(targetPhotoGPSList, true);	
 				}
 
 			}
@@ -357,7 +369,7 @@ public class MergeProcessor
 		{
 			List<GPSLocation> waypoints = getWaypointsFromFile(gpxFileField.getText());
 			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
-			theMapView.scaleToContainWaypoints(waypoints);
+			theMapView.scaleToContainWaypoints(waypoints, false);
 		} catch (FileNotFoundException | XMLStreamException e)
 		{
 			// File problem of some kind. Provide an error message and tell user to retry.
