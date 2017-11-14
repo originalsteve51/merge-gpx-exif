@@ -83,16 +83,17 @@ public class MergeMapView extends MapView
 		_SKIP = waypoints.size()/new Double(map.getZoom()).intValue();
 		if (_SKIP>75) _SKIP=75;
 		
-		System.out.println("_SKIP is : "+_SKIP);
+//		System.out.println("_SKIP is : "+_SKIP+"; waypoints size is : "+waypoints.size());
 
 		List<LatLng> plotpoints = waypoints.stream()
 										   .map(w -> new LatLng(w.getLatitude(), w.getLongitude()))
 										   .collect(Collectors.toList());
-		
+//		System.out.println("plotpoints size is : "+plotpoints.size());
 		plotpoints.stream()
 				  .forEach(p -> {
 					  				if (plotPoint(p, plotEveryWaypoint))
 					  				{
+//					  					System.out.println("Plotting : "+p);
 					  					new Marker(map).setPosition(p);
 					  				}
 					  						

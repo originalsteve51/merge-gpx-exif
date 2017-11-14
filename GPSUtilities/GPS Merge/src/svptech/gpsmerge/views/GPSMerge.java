@@ -122,7 +122,7 @@ public class GPSMerge extends JFrame
 		JLabel lblGpxFile = new JLabel("GPX file:");
 
 		textFieldGPXFile = new JTextField();
-		textFieldGPXFile.setText("C:\\dev\\GPSMerge\\TestData\\Track005.gpx");
+		textFieldGPXFile.setText("C:\\dev\\GPSMerge\\TestData\\HudsonTrack.gpx");
 		textFieldGPXFile.setColumns(10);
 
 		btnBrowseGPXFile = new JButton("Browse");
@@ -258,15 +258,6 @@ public class GPSMerge extends JFrame
 	private void createEvents()
 	{
 		MergeProcessor mp = new MergeProcessor(comboBoxTZ.getSelectedItem().toString());
-		textFieldSourceFolder.addFocusListener(new FocusAdapter()
-		{
-			@Override
-			public void focusLost(FocusEvent arg0)
-			{
-				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-						textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
-			}
-		});
 		btnBrowseSrcFolder.addActionListener(new ActionListener()
 		{
 			@Override
@@ -276,15 +267,6 @@ public class GPSMerge extends JFrame
 
 				mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
 						textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, projectedMergeCount);
-			}
-		});
-
-		textFieldGPXFile.addFocusListener(new FocusAdapter()
-		{
-			@Override
-			public void focusLost(FocusEvent e)
-			{
-				mp.updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo, theMapView);
 			}
 		});
 
