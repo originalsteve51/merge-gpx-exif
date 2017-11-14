@@ -28,6 +28,7 @@ import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 
 import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
+import svptech.gpsmerge.views.MergeMapView;
 import svptech.imaging.utils.ImageManipulationUtils;
 
 /**
@@ -41,48 +42,63 @@ public class MergeProcessor
 	
 	private static final int FIRST = 0;
 	private static final int LAST = 1;
-	private String cameraTimezone;
+	private static String cameraTimezone="America/New_York";
+	
+	// Photo timestamps will be considered to be relative to the timezone used when
+	// the time
+	// was set for the camera. Call this 'Camera Standard Time'.
+	// This is needed because the time zone used in the gpx file is GMT, so to
+	// compare the timestamps
+	// the offset between camera standard time and GMT is needed.
+	// The next line of code establishes camera standard time
+	private static ZoneId z = ZoneId.of(cameraTimezone);
+
+	// Camera timestamps are in a particular format. To understand this format, the
+	// following
+	// formatter string is used. I don't know if this varies from camera to camera
+	// or not.
+	// The string "yyyy:MM:dd HH:mm:ss" is what my Nikon D500 uses.
+	private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+	
 	
 	public MergeProcessor(String cameraTimezone)
 	{
-		this.cameraTimezone = cameraTimezone;
 	}
 
-	
-	private Comparator<GPSLocation> waypointComparator = (p1, p2) -> p1.getLocationTime()
+			
+	public Comparator<GPSLocation> waypointComparator = (p1, p2) -> p1.getLocationTime()
 			.compareTo(p2.getLocationTime());
 
-	private Comparator<File> photoFileComparator = (p1, p2) ->
-	{
-		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-		ZoneId z = ZoneId.of(cameraTimezone);
-		String taken1 = "";
-		String taken2 = "";
-		try
-		{
-			taken1 = MergeProcessor.getWhenTaken(p1);
-			taken2 = MergeProcessor.getWhenTaken(p2);
-		} catch (Exception e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		// Obtain the camera standard time from the exif data. Capture it in a
-		// LocalDateTime,
-		// which is useful for time manipulation whe making comparisons to GMT.
-		LocalDateTime localTimeTaken1 = LocalDateTime.parse(taken1, dtf);
-		ZonedDateTime localTimeTakenTZ1 = localTimeTaken1.atZone(z);
-		Instant takenInstant1 = localTimeTakenTZ1.toInstant();
-
-		LocalDateTime localTimeTaken2 = LocalDateTime.parse(taken2, dtf);
-		ZonedDateTime localTimeTakenTZ2 = localTimeTaken2.atZone(z);
-		Instant takenInstant2 = localTimeTakenTZ2.toInstant();
-		return takenInstant1.compareTo(takenInstant2);
-	};
+//	private Comparator<File> photoFileComparator = (p1, p2) ->
+//	{
+//		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+//		ZoneId z = ZoneId.of(cameraTimezone);
+//		String taken1 = "";
+//		String taken2 = "";
+//		try
+//		{
+//			taken1 = getWhenTaken(p1);
+//			taken2 = getWhenTaken(p2);
+//		} catch (Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//
+//		// Obtain the camera standard time from the exif data. Capture it in a
+//		// LocalDateTime,
+//		// which is useful for time manipulation whe making comparisons to GMT.
+//		LocalDateTime localTimeTaken1 = LocalDateTime.parse(taken1, dtf);
+//		ZonedDateTime localTimeTakenTZ1 = localTimeTaken1.atZone(z);
+//		Instant takenInstant1 = localTimeTakenTZ1.toInstant();
+//
+//		LocalDateTime localTimeTaken2 = LocalDateTime.parse(taken2, dtf);
+//		ZonedDateTime localTimeTakenTZ2 = localTimeTaken2.atZone(z);
+//		Instant takenInstant2 = localTimeTakenTZ2.toInstant();
+//		return takenInstant1.compareTo(takenInstant2);
+//	};
 
 	public static void updateSourceFilesWithTrackData(String gpxTrackFileName, String photoDirectoryPath,
-			String targetDirectoryName, String cameraTimezone, boolean debug)
+			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView)
 	{
 		// Make sure the target directory ends with a / character (required later on)
 		if (!targetDirectoryName.endsWith("/"))
@@ -132,30 +148,15 @@ public class MergeProcessor
 				System.out.println("The directory contains " + sourceFiles.length + " photos");
 			}
 			
-			// Photo timestamps will be considered to be relative to the timezone used when
-			// the time
-			// was set for the camera. Call this 'Camera Standard Time'.
-			// This is needed because the time zone used in the gpx file is GMT, so to
-			// compare the timestamps
-			// the offset between camera standard time and GMT is needed.
-			// The next line of code establishes camera standard time
-			ZoneId z = ZoneId.of(cameraTimezone);
-
-			// Camera timestamps are in a particular format. To understand this format, the
-			// following
-			// formatter string is used. I don't know if this varies from camera to camera
-			// or not.
-			// The string "yyyy:MM:dd HH:mm:ss" is what my Nikon D500 uses.
-			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-
+			List<GPSLocation> targetPhotoGPSList = new ArrayList<>();
+			
 			for (File photoFile : sourceFiles)
 			{
 				// Obtain the camera standard time from the exif data. Capture it in a
 				// LocalDateTime,
 				// which is useful for time manipulation whe making comparisons to GMT.
-				LocalDateTime localTimeTaken = LocalDateTime.parse(getWhenTaken(photoFile), dtf);
-				ZonedDateTime localTimeTakenTZ = localTimeTaken.atZone(z);
-				Instant takenInstant = localTimeTakenTZ.toInstant();
+				Instant takenInstant = getInstantWhenTaken(photoFile, dtf, z);
+				
 
 				int withinSeconds = 0;
 				Object[] closePoints = null;
@@ -187,11 +188,25 @@ public class MergeProcessor
 					// from the closest point in the gpx file
 					ImageManipulationUtils.setExifGPSTag(photoFile, new File(targetDirectoryName + photoFile.getName()),
 							lastPoint.getLongitude(), lastPoint.getLatitude());
+					
+					// Add to the list of files changed
+					GPSLocation photolocn = new GPSLocation(takenInstant.toString(), lastPoint.getLatitude(), lastPoint.getLongitude());
+					
+					System.out.println("Mapped : "+photolocn);
+					targetPhotoGPSList.add(photolocn);
+					
 				} else
 				{
 					System.err.println("No close points for the picture taken at time " + takenInstant);
 				}
+				
 
+			}
+			
+			if (targetPhotoGPSList.size()>0)
+			{
+				System.out.println("Scaling and plotting list of size: "+targetPhotoGPSList.size());
+				theMapView.scaleToContainWaypoints(targetPhotoGPSList, true);	
 			}
 
 		}
@@ -207,6 +222,14 @@ public class MergeProcessor
 			}
 		}
 		
+	}
+
+	private static Instant getInstantWhenTaken(File photoFile, DateTimeFormatter dtf, ZoneId z) throws ImageReadException, IOException, Exception
+	{
+		LocalDateTime localTimeTaken = LocalDateTime.parse(getWhenTaken(photoFile), dtf);
+		ZonedDateTime localTimeTakenTZ = localTimeTaken.atZone(z);
+		Instant takenInstant = localTimeTakenTZ.toInstant();
+		return takenInstant;
 	}
 
 	private static Object[] findClosePoints(List<GPSLocation> waypoints, Instant takenInstant, int withinSeconds)
@@ -263,15 +286,15 @@ public class MergeProcessor
 		return field.getValueDescription();
 	}
 	
-	// TODO finish this method
 	/**
-	 * Find the earliest and latest timestamps in the source photo directory and see
-	 * how this interval overlaps with the earliest and latest waypoints in the gpx
-	 * file. If the interval has any overlap, then do the merge and count the size
-	 * of the resulting collection without writing it out to the target directory.
+	 * Find how many of the source photos overlap with the interval defined by the 
+	 * earliest and latest waypoints in the gpx
+	 * file. 
 	 * 
-	 * @return
+	 * @return A count of how many source files will be mapped
 	 * @throws FileNotFoundException
+	 * @param gpxFilePathname
+	 * @param srcDirectoryPathname
 	 * @throws XMLStreamException
 	 */
 	public int getProjectedMergeCount(String gpxFilePathname, String srcDirectoryPathname) throws FileNotFoundException, XMLStreamException
@@ -280,25 +303,38 @@ public class MergeProcessor
 		List<GPSLocation> waypoints = getWaypointsFromFile(gpxFilePathname);
 
 		List<GPSLocation> firstLast = getFirstLast(waypoints, waypointComparator);
+		
+		Instant first = firstLast.get(FIRST).getLocationTime();
+		Instant last = firstLast.get(LAST).getLocationTime();
 
-		System.out.println("First waypoint: " + firstLast.get(FIRST));
-		System.out.println("Last waypoint: " + firstLast.get(LAST));
-
-		// Now find the earliest and latest photos in the source folder.
-		// The UI assures that there is a directory named in textFieldSourceFolder, so
-		// no additional checks are made here.
+		// Now go through source files one at a time and see if their timestamp is in the interval. Each that
+		// is in this interval will be mapped.
 		File srcDirectory = new File(srcDirectoryPathname);
 
 		// Get a list of File instances
 		File[] files = srcDirectory.listFiles(new PictureFileFilter());
 		List<File> sourceFiles = Arrays.asList(files);
+		
+		
+		int mergeCount = 0;
+		
+		try
+		{
+			for (File photoFile: files)
+			{
+				Instant instantTaken = getInstantWhenTaken(photoFile, dtf, z);
+				if (instantTaken.isAfter(first) && instantTaken.isBefore(last))
+				{
+					mergeCount++;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			System.err.println(e);
+		}
 
-		List<File> firstLastPhotos = getFirstLast(sourceFiles, photoFileComparator);
-
-		System.out.println("First source file: " + firstLastPhotos.get(FIRST));
-		System.out.println("Last source file: " + firstLastPhotos.get(LAST));
-
-		return waypoints.size();
+		return mergeCount;
 	}
 
 	/**
@@ -310,7 +346,7 @@ public class MergeProcessor
 	 *            Comparator that can determine the earliest of two T instances.
 	 * @return
 	 */
-	private <T> List<T> getFirstLast(List<T> aList, Comparator<T> comp)
+	public <T> List<T> getFirstLast(List<T> aList, Comparator<T> comp)
 	{
 		List<T> firstLast = new ArrayList<T>();
 
@@ -349,13 +385,14 @@ public class MergeProcessor
 		return waypoints.size();
 	}
 
-	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel)
+	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel, MergeMapView theMapView)
 	{
 		String gpxStatus = "";
 		try
 		{
 			List<GPSLocation> waypoints = getWaypointsFromFile(gpxFileField.getText());
 			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
+			theMapView.scaleToContainWaypoints(waypoints, false);
 		} catch (FileNotFoundException | XMLStreamException e)
 		{
 			// File problem of some kind. Provide an error message and tell user to retry.
@@ -383,12 +420,11 @@ public class MergeProcessor
 			{
 				// See how many will merge and place the message in the label named
 				// projectedMergeCount
-				// TODO For now just put a message there. Need method getProjectedMergeCount()
 				// based on timestamp overlap
 				// between the photos and the waypoints
-				int wpcount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
-				String projectedAction = "There are " + srcFileCount + " source photo files and " + wpcount
-						+ " waypoints.";
+				int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
+				String projectedAction = "There are " + srcFileCount + " source photo files and " + mergeCount
+						+ " of these will be mapped.";
 				projectedMergeCount.setText(projectedAction);
 			} else
 			{
