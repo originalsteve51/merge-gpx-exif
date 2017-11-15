@@ -1,9 +1,11 @@
 package svptech.gpsmerge.views;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.teamdev.jxmaps.ControlPosition;
+import com.teamdev.jxmaps.InfoWindow;
 import com.teamdev.jxmaps.LatLng;
 import com.teamdev.jxmaps.LatLngBounds;
 import com.teamdev.jxmaps.Map;
@@ -19,6 +21,8 @@ import svptech.gpsmerge.location.GPSLocation;
 public class MergeMapView extends MapView
 {
 	private static final long serialVersionUID = 1L;
+	private static List<Marker> allMarkers = new ArrayList<>();
+	private static int markerCounter = 0;
 
 	public MergeMapView()
 	{
@@ -51,10 +55,11 @@ public class MergeMapView extends MapView
 
 	public void scaleToContainWaypoints(List<GPSLocation> waypoints, boolean plotEveryWaypoint)
 	{
+		removeAllMarkers();
+		
 		// Find the farthest southwest and northeast waypoints. These define the
 		// corners of the map view we need to contain the track described by the
 		// waypoints.
-
 		GPSLocation minLatitude = waypoints.stream()
 										   .min((p1, p2) -> p1.getLatitude() > p2.getLatitude() ? -1 : 1)
 										   .get();
@@ -80,25 +85,82 @@ public class MergeMapView extends MapView
 		// found from the waypoint list
 	    Map map = getMap();
 		map.fitBounds(bounds);
+		
+		// When dealing with long gpx paths, there are many waypoints very close to eachother.
+		// To keep the path looking like a set of points not all on top of one another, some
+		// will be skipped. Determine how many to skip between plotted ones next...
 		_SKIP = waypoints.size()/new Double(map.getZoom()).intValue();
+		
+		// Never skip more than 75 points.
 		if (_SKIP>75) _SKIP=75;
 		
-//		System.out.println("_SKIP is : "+_SKIP+"; waypoints size is : "+waypoints.size());
+		// Reset the marker counter, which is used to visually tag the markers with the sequence in which photos
+		// were taken.
+		makeInfoWindowContent(true);
+		double plotpointCount = waypoints.size();
 
-		List<LatLng> plotpoints = waypoints.stream()
-										   .map(w -> new LatLng(w.getLatitude(), w.getLongitude()))
-										   .collect(Collectors.toList());
-//		System.out.println("plotpoints size is : "+plotpoints.size());
-		plotpoints.stream()
-				  .forEach(p -> {
-					  				if (plotPoint(p, plotEveryWaypoint))
+		// Sort the waypoints where photos were taken by time taken, then decorate each waypoint with an
+		// ordinal flag that shows the order in which they were taken.
+		waypoints.stream()
+				 .sorted( (w1, w2) -> w1.getLocationTime().compareTo(w2.getLocationTime()) )
+				 .forEach(p -> {
+					  				if (plotPoint(p.getLocation(), plotEveryWaypoint))
 					  				{
-//					  					System.out.println("Plotting : "+p);
-					  					new Marker(map).setPosition(p);
+					  					Marker aMarker = new Marker(map);
+					  					
+					  					// Only add tags to photos. Photo waypoints are all plotted and
+					  					// never skipped. This same method is called to plot the entire
+					  					// GPX path, and when this is done some waypoints are skipped. No
+					  					// tags are added when the GPX path points are plotted.
+					  					if (plotEveryWaypoint)
+					  					{
+						  					String infoTag = makeInfoWindowContent(false);
+						  					double zPosition = plotpointCount;
+						  					
+						  					// Mark the point where a photo was located.
+						  					aMarker.setZIndex(zPosition);
+						  					
+						  					InfoWindow info = new InfoWindow(map);
+						  					info.setContent(infoTag);
+						  					info.open(map, aMarker);
+					  					}
+
+					  					aMarker.setPosition(p.getLocation());
+					  					
+					  					// Keep the list of Markers up to date, as it must be cleared
+					  					// each time the map changes.
+					  					allMarkers.add(aMarker);
 					  				}
 					  						
 					  			}
 						  );
+	}
+
+	
+	private String makeInfoWindowContent(boolean reset)
+	{
+		String count = "";
+		if (reset)
+		{
+			markerCounter = 0;
+		}
+		else
+		{
+			count = new Integer(++markerCounter).toString();
+		}
+		return count;
+	}
+
+	/**
+	 * Remove markers from the map and from the List of markers in 
+	 * preparation for placing new markers on the map.
+	 */
+	private void removeAllMarkers()
+	{
+		// Remove all markers from the map and then clear the allMarkers
+		// collection.
+		allMarkers.forEach(m -> m.remove());
+		allMarkers.clear();
 	}
 
 	static int _COUNT = 0;

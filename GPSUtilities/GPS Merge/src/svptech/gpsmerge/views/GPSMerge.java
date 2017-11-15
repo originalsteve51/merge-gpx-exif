@@ -7,8 +7,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TimeZone;
 
 import javax.swing.DefaultComboBoxModel;
@@ -27,9 +25,10 @@ import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileSystemView;
 
+import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.wb.swing.FocusTraversalOnArray;
-
-import com.teamdev.jxmaps.LatLng;
 
 import svptech.gpsmerge.common.MergeProcessor;
 
@@ -63,6 +62,8 @@ public class GPSMerge extends JFrame
 	private JLabel lblSourceInfo;
 	private JLabel lblGPXInfo;
 	private JLabel lblTargetInfo;
+	
+	private String pathroot;
 
 	/**
 	 * Launch the application.
@@ -103,6 +104,21 @@ public class GPSMerge extends JFrame
 
 	private void initComponents()
 	{
+		Configurations configs = new Configurations();
+		try
+		{
+		    Configuration config = configs.properties(new File("config.properties"));
+		    // access configuration properties
+		    pathroot = config.getString("common.path");
+		    System.out.println("common.path = "+pathroot);
+		}
+		catch (ConfigurationException cex)
+		{
+		    System.err.println(cex);
+		    System.exit (-1);
+		}
+		
+		
 		setTitle("GPSMerge");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(2000, 1500);
@@ -114,7 +130,7 @@ public class GPSMerge extends JFrame
 		JLabel lblSourceFolder = new JLabel("Source folder:");
 
 		textFieldSourceFolder = new JTextField();
-		textFieldSourceFolder.setText("C:\\dev\\GPSMerge\\TestData\\Test Photo Directory\\HudsonWalkway2017");
+		textFieldSourceFolder.setText(pathroot);
 		textFieldSourceFolder.setColumns(10);
 
 		btnBrowseSrcFolder = new JButton("Browse");
@@ -122,7 +138,7 @@ public class GPSMerge extends JFrame
 		JLabel lblGpxFile = new JLabel("GPX file:");
 
 		textFieldGPXFile = new JTextField();
-		textFieldGPXFile.setText("C:\\dev\\GPSMerge\\TestData\\HudsonTrack.gpx");
+		textFieldGPXFile.setText(pathroot);
 		textFieldGPXFile.setColumns(10);
 
 		btnBrowseGPXFile = new JButton("Browse");
@@ -130,7 +146,7 @@ public class GPSMerge extends JFrame
 		JLabel lblTargetFolder = new JLabel("Target folder:");
 
 		textFieldTargetFolder = new JTextField();
-		textFieldTargetFolder.setText("c:\\dev\\GPSMerge");
+		textFieldTargetFolder.setText(pathroot);
 		textFieldTargetFolder.setColumns(10);
 
 		btnBrowseTargetFolder = new JButton("Browse");

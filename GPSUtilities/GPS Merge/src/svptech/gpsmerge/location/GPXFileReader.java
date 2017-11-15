@@ -38,7 +38,10 @@ public class GPXFileReader
 	{
 		super();
 		this.loggingEnabled = enableLogging;
-		this.gpxFileStream = new FileInputStream(gpxFile);
+		if (gpxFile.isFile())
+		{
+			this.gpxFileStream = new FileInputStream(gpxFile);
+		}
 	}
 
 	private FileInputStream gpxFileStream = null;
