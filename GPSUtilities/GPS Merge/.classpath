@@ -19,5 +19,9 @@
 	<classpathentry kind="lib" path="C:/devTools/JxMaps/lib/jxmaps-mac-1.3.1.jar"/>
 	<classpathentry kind="lib" path="C:/devTools/JxMaps/lib/jxmaps-win-1.3.1.jar"/>
 	<classpathentry kind="lib" path="C:/devTools/JxMaps/lib/license.jar"/>
+	<classpathentry kind="lib" path="C:/devTools/commons-configuration2-2.2/commons-configuration2-2.2.jar"/>
+	<classpathentry kind="lib" path="C:/devTools/commons-logging-1.2/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="C:/devTools/commons-beanutils-1.9.3/commons-beanutils-1.9.3.jar"/>
+	<classpathentry kind="lib" path="C:/devTools/commons-lang3-3.7/commons-lang3-3.7.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
