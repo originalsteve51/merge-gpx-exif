@@ -1,6 +1,7 @@
 package svptech.gpsmerge.views;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,11 +41,6 @@ public class MergeMapView extends MapView
 					controlOptions.setPosition(ControlPosition.TOP_RIGHT);
 					options.setMapTypeControlOptions(controlOptions);
 					map.setOptions(options);
-
-					// LatLng sw = new LatLng(35.4088, -80.5795);
-					// LatLng ne = new LatLng(35.7079, -79.8136);
-					// map.fitBounds(new LatLngBounds(sw, ne));
-
 				}
 			}
 		} // end MapReadyHandler
@@ -103,39 +99,40 @@ public class MergeMapView extends MapView
 		// ordinal flag that shows the order in which they were taken.
 		waypoints.stream()
 				 .sorted( (w1, w2) -> w1.getLocationTime().compareTo(w2.getLocationTime()) )
-				 .forEach(p -> {
-					  				if (plotPoint(p.getLocation(), plotEveryWaypoint))
-					  				{
-					  					Marker aMarker = new Marker(map);
-					  					
-					  					// Only add tags to photos. Photo waypoints are all plotted and
-					  					// never skipped. This same method is called to plot the entire
-					  					// GPX path, and when this is done some waypoints are skipped. No
-					  					// tags are added when the GPX path points are plotted.
-					  					if (plotEveryWaypoint)
-					  					{
-						  					String infoTag = makeInfoWindowContent(false);
-						  					double zPosition = plotpointCount;
-						  					
-						  					// Mark the point where a photo was located.
-						  					aMarker.setZIndex(zPosition);
-						  					
-						  					InfoWindow info = new InfoWindow(map);
-						  					info.setContent(infoTag);
-						  					info.open(map, aMarker);
-					  					}
-
-					  					aMarker.setPosition(p.getLocation());
-					  					
-					  					// Keep the list of Markers up to date, as it must be cleared
-					  					// each time the map changes.
-					  					allMarkers.add(aMarker);
-					  				}
-					  						
-					  			}
-						  );
+				 .forEach(p -> plotWaypoint(p, map, plotpointCount, plotEveryWaypoint)  );
 	}
 
+	private void plotWaypoint(GPSLocation p, Map map, double plotpointCount, boolean plotEveryWaypoint)
+	{
+		if (plotPoint(p.getLocation(), plotEveryWaypoint))
+		{
+			Marker aMarker = new Marker(map);
+
+			// Only add tags to photos. Photo waypoints are all plotted and
+			// never skipped. This same method is called to plot the entire
+			// GPX path, and when this is done some waypoints are skipped. No
+			// tags are added when the GPX path points are plotted.
+			if (plotEveryWaypoint)
+			{
+				String infoTag = makeInfoWindowContent(false);
+				double zPosition = plotpointCount;
+
+				// Mark the point where a photo was located.
+				aMarker.setZIndex(zPosition);
+
+				InfoWindow info = new InfoWindow(map);
+				info.setContent(infoTag);
+				info.open(map, aMarker);
+			}
+
+			aMarker.setPosition(p.getLocation());
+
+			// Keep the list of Markers up to date, as it must be cleared
+			// each time the map changes.
+			allMarkers.add(aMarker);
+		}
+
+	}
 	
 	private String makeInfoWindowContent(boolean reset)
 	{

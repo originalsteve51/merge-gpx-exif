@@ -32,18 +32,19 @@ import svptech.gpsmerge.views.MergeMapView;
 import svptech.imaging.utils.ImageManipulationUtils;
 
 /**
- * Methods are provided to merge of waypoint data from a GPX file to a
- * set of photo files defined by the content of a source directory. 
+ * Methods are provided to merge of waypoint data from a GPX file to a set of
+ * photo files defined by the content of a source directory.
+ * 
  * @author Steve Harding
  *
  */
 public class MergeProcessor
 {
-	
+
 	private static final int FIRST = 0;
 	private static final int LAST = 1;
-	private static String cameraTimezone="America/New_York";
-	
+	private static String cameraTimezone = "America/New_York";
+
 	// Photo timestamps will be considered to be relative to the timezone used when
 	// the time
 	// was set for the camera. Call this 'Camera Standard Time'.
@@ -59,46 +60,44 @@ public class MergeProcessor
 	// or not.
 	// The string "yyyy:MM:dd HH:mm:ss" is what my Nikon D500 uses.
 	private static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-	
-	
+
 	public MergeProcessor(String cameraTimezone)
 	{
 	}
 
-			
 	public Comparator<GPSLocation> waypointComparator = (p1, p2) -> p1.getLocationTime()
 			.compareTo(p2.getLocationTime());
 
-//	private Comparator<File> photoFileComparator = (p1, p2) ->
-//	{
-//		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
-//		ZoneId z = ZoneId.of(cameraTimezone);
-//		String taken1 = "";
-//		String taken2 = "";
-//		try
-//		{
-//			taken1 = getWhenTaken(p1);
-//			taken2 = getWhenTaken(p2);
-//		} catch (Exception e)
-//		{
-//			e.printStackTrace();
-//		}
-//
-//		// Obtain the camera standard time from the exif data. Capture it in a
-//		// LocalDateTime,
-//		// which is useful for time manipulation whe making comparisons to GMT.
-//		LocalDateTime localTimeTaken1 = LocalDateTime.parse(taken1, dtf);
-//		ZonedDateTime localTimeTakenTZ1 = localTimeTaken1.atZone(z);
-//		Instant takenInstant1 = localTimeTakenTZ1.toInstant();
-//
-//		LocalDateTime localTimeTaken2 = LocalDateTime.parse(taken2, dtf);
-//		ZonedDateTime localTimeTakenTZ2 = localTimeTaken2.atZone(z);
-//		Instant takenInstant2 = localTimeTakenTZ2.toInstant();
-//		return takenInstant1.compareTo(takenInstant2);
-//	};
+	// private Comparator<File> photoFileComparator = (p1, p2) ->
+	// {
+	// DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+	// ZoneId z = ZoneId.of(cameraTimezone);
+	// String taken1 = "";
+	// String taken2 = "";
+	// try
+	// {
+	// taken1 = getWhenTaken(p1);
+	// taken2 = getWhenTaken(p2);
+	// } catch (Exception e)
+	// {
+	// e.printStackTrace();
+	// }
+	//
+	// // Obtain the camera standard time from the exif data. Capture it in a
+	// // LocalDateTime,
+	// // which is useful for time manipulation whe making comparisons to GMT.
+	// LocalDateTime localTimeTaken1 = LocalDateTime.parse(taken1, dtf);
+	// ZonedDateTime localTimeTakenTZ1 = localTimeTaken1.atZone(z);
+	// Instant takenInstant1 = localTimeTakenTZ1.toInstant();
+	//
+	// LocalDateTime localTimeTaken2 = LocalDateTime.parse(taken2, dtf);
+	// ZonedDateTime localTimeTakenTZ2 = localTimeTaken2.atZone(z);
+	// Instant takenInstant2 = localTimeTakenTZ2.toInstant();
+	// return takenInstant1.compareTo(takenInstant2);
+	// };
 
 	public static void updateSourceFilesWithTrackData(String gpxTrackFileName, String photoDirectoryPath,
-			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView)
+			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView) throws Exception
 	{
 		// Make sure the target directory ends with a / character (required later on)
 		if (!targetDirectoryName.endsWith("/"))
@@ -110,9 +109,7 @@ public class MergeProcessor
 		File gpxTrackFile = new File(gpxTrackFileName);
 		if (!gpxTrackFile.exists() || !gpxTrackFile.isFile())
 		{
-			System.err.println(
-					"Invalid or non-existing gpx file name passed as the first argument : " + gpxTrackFileName);
-			System.exit(-2);
+			throw new Exception("Invalid or non-existing gpx file name provided");
 		}
 
 		// Validate the target directory name, create it if not there already
@@ -136,27 +133,25 @@ public class MergeProcessor
 			// timestamp from exif data and use it
 			// to locate a GPSLocation in the list that is closest in time.
 			File photoDirectory = new File(photoDirectoryPath);
-			File[] sourceFiles = photoDirectory.listFiles();
+			File[] sourceFiles = photoDirectory.listFiles(new PictureFileFilter());
 
 			if (sourceFiles == null)
 			{
-				System.err.println("No photo files were found in the source directory : " + photoDirectoryPath);
-				System.exit(-3);
+				throw new Exception("No photo files were found in the source directory.");
 			}
 			if (debug)
 			{
 				System.out.println("The directory contains " + sourceFiles.length + " photos");
 			}
-			
+
 			List<GPSLocation> targetPhotoGPSList = new ArrayList<>();
-			
+
 			for (File photoFile : sourceFiles)
 			{
 				// Obtain the camera standard time from the exif data. Capture it in a
 				// LocalDateTime,
 				// which is useful for time manipulation whe making comparisons to GMT.
 				Instant takenInstant = getInstantWhenTaken(photoFile, dtf, z);
-				
 
 				int withinSeconds = 0;
 				Object[] closePoints = null;
@@ -188,43 +183,44 @@ public class MergeProcessor
 					// from the closest point in the gpx file
 					ImageManipulationUtils.setExifGPSTag(photoFile, new File(targetDirectoryName + photoFile.getName()),
 							lastPoint.getLongitude(), lastPoint.getLatitude());
-					
+
 					// Add to the list of files changed
-					GPSLocation photolocn = new GPSLocation(takenInstant.toString(), lastPoint.getLatitude(), lastPoint.getLongitude());
-					
-					System.out.println("Mapped : "+photolocn);
+					GPSLocation photolocn = new GPSLocation(takenInstant.toString(), lastPoint.getLatitude(),
+							lastPoint.getLongitude());
+
+					System.out.println("Mapped : " + photolocn);
 					targetPhotoGPSList.add(photolocn);
-					
+
 				} else
 				{
 					System.err.println("No close points for the picture taken at time " + takenInstant);
 				}
-				
 
 			}
-			
-			if (targetPhotoGPSList.size()>0)
+
+			if (targetPhotoGPSList.size() > 0)
 			{
-				System.out.println("Scaling and plotting list of size: "+targetPhotoGPSList.size());
-				theMapView.scaleToContainWaypoints(targetPhotoGPSList, true);	
+				System.out.println("Scaling and plotting list of size: " + targetPhotoGPSList.size());
+				theMapView.scaleToContainWaypoints(targetPhotoGPSList, true);
 			}
 
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
+		} 
+//		catch (Exception e)
+//		{
+//			e.printStackTrace();
+//		} 
 		finally
 		{
-			if (gpxFile!=null)
+			if (gpxFile != null)
 			{
 				gpxFile.close();
 			}
 		}
-		
+
 	}
 
-	private static Instant getInstantWhenTaken(File photoFile, DateTimeFormatter dtf, ZoneId z) throws ImageReadException, IOException, Exception
+	private static Instant getInstantWhenTaken(File photoFile, DateTimeFormatter dtf, ZoneId z)
+			throws ImageReadException, IOException, Exception
 	{
 		LocalDateTime localTimeTaken = LocalDateTime.parse(getWhenTaken(photoFile), dtf);
 		ZonedDateTime localTimeTakenTZ = localTimeTaken.atZone(z);
@@ -285,54 +281,55 @@ public class MergeProcessor
 		final TiffField field = jpegMetadata.findEXIFValueWithExactMatch(tagInfo);
 		return field.getValueDescription();
 	}
-	
+
 	/**
-	 * Find how many of the source photos overlap with the interval defined by the 
-	 * earliest and latest waypoints in the gpx
-	 * file. 
+	 * Find how many of the source photos overlap with the interval defined by the
+	 * earliest and latest waypoints in the gpx file.
 	 * 
 	 * @return A count of how many source files will be mapped
-	 * @throws FileNotFoundException
 	 * @param gpxFilePathname
 	 * @param srcDirectoryPathname
-	 * @throws XMLStreamException
+	 * @throws Exception
+	 * @throws IOException
+	 * @throws ImageReadException
 	 */
-	public int getProjectedMergeCount(String gpxFilePathname, String srcDirectoryPathname) throws FileNotFoundException, XMLStreamException
+	public int getProjectedMergeCount(String gpxFilePathname, String srcDirectoryPathname)
+			throws ImageReadException, IOException, Exception
 	{
 
 		List<GPSLocation> waypoints = getWaypointsFromFile(gpxFilePathname);
 
 		List<GPSLocation> firstLast = getFirstLast(waypoints, waypointComparator);
-		
+
 		Instant first = firstLast.get(FIRST).getLocationTime();
 		Instant last = firstLast.get(LAST).getLocationTime();
 
-		// Now go through source files one at a time and see if their timestamp is in the interval. Each that
+		// Now go through source files one at a time and see if their timestamp is in
+		// the interval. Each that
 		// is in this interval will be mapped.
 		File srcDirectory = new File(srcDirectoryPathname);
 
 		// Get a list of File instances
 		File[] files = srcDirectory.listFiles(new PictureFileFilter());
 		List<File> sourceFiles = Arrays.asList(files);
-		
-		
+
 		int mergeCount = 0;
-		
-		try
+
+		// try
+		// {
+		for (File photoFile : files)
 		{
-			for (File photoFile: files)
+			Instant instantTaken = getInstantWhenTaken(photoFile, dtf, z);
+			if (instantTaken.isAfter(first) && instantTaken.isBefore(last))
 			{
-				Instant instantTaken = getInstantWhenTaken(photoFile, dtf, z);
-				if (instantTaken.isAfter(first) && instantTaken.isBefore(last))
-				{
-					mergeCount++;
-				}
+				mergeCount++;
 			}
 		}
-		catch (Exception e)
-		{
-			System.err.println(e);
-		}
+		// }
+		// catch (Exception e)
+		// {
+		// System.err.println(e);
+		// }
 
 		return mergeCount;
 	}
@@ -364,12 +361,10 @@ public class MergeProcessor
 		{
 			gpxFile = new GPXFileReader(new File(gpxFilePath), false);
 			waypoints = gpxFile.getGPXFileLocations();
-		} 
-		catch (FileNotFoundException | XMLStreamException e)
+		} catch (FileNotFoundException | XMLStreamException e)
 		{
 			throw e;
-		} 
-		finally
+		} finally
 		{
 			if (gpxFile != null)
 			{
@@ -378,7 +373,7 @@ public class MergeProcessor
 		}
 		return waypoints;
 	}
-	
+
 	public int getWaypointCount(String gpxFilePathname) throws FileNotFoundException, XMLStreamException
 	{
 		List<GPSLocation> waypoints = getWaypointsFromFile(gpxFilePathname);
@@ -402,7 +397,9 @@ public class MergeProcessor
 		gpxInfoLabel.setText(gpxStatus);
 	}
 
-	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname, JLabel lblSourceInfo, JLabel lblTargetInfo, JLabel projectedMergeCount)
+	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname,
+			String gpxFilePathname, JLabel lblSourceInfo, JLabel lblTargetInfo, JLabel projectedMergeCount)
+			throws Exception
 	{
 
 		int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
@@ -414,26 +411,19 @@ public class MergeProcessor
 		// When there is a source directory and there is a gpx file, count how many
 		// source photos will be mapped
 		// when a merge is performed. Put this information on the window for the user.
-		try
+		if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
 		{
-			if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
-			{
-				// See how many will merge and place the message in the label named
-				// projectedMergeCount
-				// based on timestamp overlap
-				// between the photos and the waypoints
-				int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
-				String projectedAction = "There are " + srcFileCount + " source photo files and " + mergeCount
-						+ " of these will be mapped.";
-				projectedMergeCount.setText(projectedAction);
-			} else
-			{
-				projectedMergeCount.setText("");
-			}
-		} catch (FileNotFoundException | XMLStreamException e)
+			// See how many will merge and place the message in the label named
+			// projectedMergeCount
+			// based on timestamp overlap
+			// between the photos and the waypoints
+			int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
+			String projectedAction = "There are " + srcFileCount + " source photo files and " + mergeCount
+					+ " of these will be mapped.";
+			projectedMergeCount.setText(projectedAction);
+		} else
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			projectedMergeCount.setText("");
 		}
 	}
 
@@ -459,6 +449,5 @@ public class MergeProcessor
 	{
 		this.cameraTimezone = cameraTimezone;
 	}
-
 
 }
