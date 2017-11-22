@@ -8,6 +8,8 @@ import com.teamdev.jxmaps.LatLng;
 
 public class GPSLocation
 {
+	private String photoFilePathname;
+	
 	// We need the time zone used by the camera for its local timestamps.
 	static final ZoneId z = ZoneId.of( "America/Montreal" );
 
@@ -58,6 +60,16 @@ public class GPSLocation
 	public LatLng getLocation()
 	{
 		return location;
+	}
+
+	public String getPhotoFilePathname()
+	{
+		return photoFilePathname;
+	}
+
+	public void setPhotoFilePathname(String photoFilePathname)
+	{
+		this.photoFilePathname = photoFilePathname;
 	}
 
 }

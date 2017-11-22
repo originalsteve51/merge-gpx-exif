@@ -1,6 +1,6 @@
 package svptech.gpsmerge.views;
 
-import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
@@ -13,7 +13,6 @@ import java.util.TimeZone;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -33,9 +32,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.eclipse.wb.swing.FocusTraversalOnArray;
 
 import svptech.gpsmerge.common.MergeProcessor;
-import svptech.imaging.test.LoadImageApp;
-
-import java.awt.Color;
+import svptech.image.utils.RenderImageFromFile;
 
 /**
  * Use the main() entry point in this class to display a Swing UI front-end for
@@ -66,10 +63,10 @@ public class GPSMerge extends JFrame
 
 	private String pathroot;
 	private JLabel lblStatus;
-	private JLabel lblSourceInfo;
-	private JLabel lblGPXInfo;
-	private JLabel lblTargetInfo;
-	private JPanel imagePanel;
+	private JPanel pnlImage;
+	
+	private RenderImageFromFile image;
+
 
 	/**
 	 * Launch the application.
@@ -164,30 +161,25 @@ public class GPSMerge extends JFrame
 		btnMergeGpsLocations = new JButton("Merge GPS Locations");
 
 		theMapView = new MergeMapView();
+		theMapView.setBackground(Color.GRAY);
 		
 		lblStatus = new JLabel(" ");
 		
-		lblSourceInfo = new JLabel(" ");
+		pnlImage = new JPanel();
+		pnlImage.setBackground(Color.GRAY);
 		
-		lblGPXInfo = new JLabel(" ");
-		
-		lblTargetInfo = new JLabel(" ");
-		
-		imagePanel = new JPanel();
-		imagePanel.setBackground(Color.LIGHT_GRAY);
+		image = new RenderImageFromFile();
 
 		GroupLayout gl_contentPane = new GroupLayout(contentPane);
 		gl_contentPane.setHorizontalGroup(
-			gl_contentPane.createParallelGroup(Alignment.LEADING)
+			gl_contentPane.createParallelGroup(Alignment.TRAILING)
 				.addGroup(gl_contentPane.createSequentialGroup()
+					.addContainerGap(100, Short.MAX_VALUE)
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-						.addGroup(gl_contentPane.createSequentialGroup()
-							.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-							.addComponent(theMapView, GroupLayout.PREFERRED_SIZE, 1832, GroupLayout.PREFERRED_SIZE))
+						.addComponent(theMapView, GroupLayout.PREFERRED_SIZE, 1832, GroupLayout.PREFERRED_SIZE)
 						.addGroup(gl_contentPane.createSequentialGroup()
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 								.addGroup(gl_contentPane.createSequentialGroup()
-									.addContainerGap()
 									.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 										.addGroup(gl_contentPane.createParallelGroup(Alignment.TRAILING)
 											.addComponent(lblGpxFile)
@@ -199,68 +191,57 @@ public class GPSMerge extends JFrame
 									.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 										.addComponent(comboBoxTZ, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 										.addGroup(gl_contentPane.createSequentialGroup()
-											.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING, false)
-												.addComponent(lblStatus, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-												.addGroup(gl_contentPane.createSequentialGroup()
-													.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-														.addComponent(textFieldTargetFolder, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE)
-														.addComponent(textFieldGPXFile, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE)
-														.addComponent(textFieldSourceFolder, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE))
-													.addPreferredGap(ComponentPlacement.UNRELATED)
-													.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-														.addComponent(btnBrowseTargetFolder)
-														.addComponent(btnBrowseSrcFolder, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-														.addComponent(btnBrowseGPXFile, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-											.addPreferredGap(ComponentPlacement.UNRELATED)
 											.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
-												.addComponent(lblGPXInfo)
-												.addComponent(lblSourceInfo)
-												.addComponent(lblTargetInfo)))))
+												.addComponent(textFieldTargetFolder, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE)
+												.addComponent(textFieldGPXFile, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE)
+												.addComponent(textFieldSourceFolder, GroupLayout.PREFERRED_SIZE, 430, GroupLayout.PREFERRED_SIZE))
+											.addPreferredGap(ComponentPlacement.UNRELATED)
+											.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING, false)
+												.addComponent(btnBrowseTargetFolder)
+												.addComponent(btnBrowseSrcFolder)
+												.addComponent(btnBrowseGPXFile)))
+										.addComponent(lblStatus, GroupLayout.PREFERRED_SIZE, 589, GroupLayout.PREFERRED_SIZE)))
 								.addGroup(gl_contentPane.createSequentialGroup()
 									.addGap(283)
 									.addComponent(btnMergeGpsLocations)))
-							.addPreferredGap(ComponentPlacement.RELATED, 366, Short.MAX_VALUE)
-							.addComponent(imagePanel, GroupLayout.PREFERRED_SIZE, 661, GroupLayout.PREFERRED_SIZE)))
-					.addGap(100))
+							.addGap(37)
+							.addComponent(pnlImage, GroupLayout.PREFERRED_SIZE, 995, GroupLayout.PREFERRED_SIZE)))
+					.addGap(26))
 		);
 		gl_contentPane.setVerticalGroup(
 			gl_contentPane.createParallelGroup(Alignment.LEADING)
 				.addGroup(gl_contentPane.createSequentialGroup()
 					.addGroup(gl_contentPane.createParallelGroup(Alignment.LEADING)
 						.addGroup(gl_contentPane.createSequentialGroup()
-							.addContainerGap()
+							.addGap(86)
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 								.addComponent(lblSourceFolder)
 								.addComponent(textFieldSourceFolder, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-								.addComponent(btnBrowseSrcFolder)
-								.addComponent(lblSourceInfo))
+								.addComponent(btnBrowseSrcFolder))
 							.addPreferredGap(ComponentPlacement.RELATED)
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 								.addComponent(lblGpxFile)
 								.addComponent(textFieldGPXFile, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-								.addComponent(btnBrowseGPXFile)
-								.addComponent(lblGPXInfo))
+								.addComponent(btnBrowseGPXFile))
 							.addGap(18)
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 								.addComponent(lblTargetFolder)
 								.addComponent(textFieldTargetFolder, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-								.addComponent(btnBrowseTargetFolder)
-								.addComponent(lblTargetInfo))
+								.addComponent(btnBrowseTargetFolder))
 							.addGap(26)
 							.addGroup(gl_contentPane.createParallelGroup(Alignment.BASELINE)
 								.addComponent(comboBoxTZ, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 								.addComponent(lblCameraTimezone))
-							.addPreferredGap(ComponentPlacement.UNRELATED)
+							.addPreferredGap(ComponentPlacement.RELATED)
 							.addComponent(lblStatus)
 							.addPreferredGap(ComponentPlacement.RELATED)
-							.addComponent(btnMergeGpsLocations)
-							.addPreferredGap(ComponentPlacement.RELATED, 29, Short.MAX_VALUE))
-						.addGroup(Alignment.TRAILING, gl_contentPane.createSequentialGroup()
+							.addComponent(btnMergeGpsLocations))
+						.addGroup(gl_contentPane.createSequentialGroup()
 							.addContainerGap()
-							.addComponent(imagePanel, GroupLayout.PREFERRED_SIZE, 435, GroupLayout.PREFERRED_SIZE)
-							.addPreferredGap(ComponentPlacement.RELATED)))
+							.addComponent(pnlImage, GroupLayout.PREFERRED_SIZE, 435, GroupLayout.PREFERRED_SIZE)))
+					.addPreferredGap(ComponentPlacement.RELATED)
 					.addComponent(theMapView, GroupLayout.PREFERRED_SIZE, 967, GroupLayout.PREFERRED_SIZE)
-					.addContainerGap())
+					.addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
 		);
 		contentPane.setLayout(gl_contentPane);
 
@@ -268,9 +249,8 @@ public class GPSMerge extends JFrame
 		{ textFieldSourceFolder, btnBrowseSrcFolder, textFieldGPXFile, btnBrowseGPXFile, textFieldTargetFolder,
 				btnBrowseTargetFolder, comboBoxTZ, btnMergeGpsLocations }));
 		
-		LoadImageApp imageApp = new LoadImageApp();
-		imagePanel.add(imageApp);
-		imagePanel.setVisible(true);
+		pnlImage.add(image);
+		pnlImage.setVisible(true);
 
 
 	}
@@ -291,11 +271,16 @@ public class GPSMerge extends JFrame
 				try
 				{
 					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-							textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, lblStatus);
+							textFieldGPXFile.getText(), lblStatus);
+					
 				} 
 				catch (Exception e1)
 				{
+					// Tell the user so s/he can fix this
 					lblStatus.setText(e1.getMessage());
+
+					// Also print the stack trace for diagnosis
+					e1.printStackTrace();
 				}
 			}
 		});
@@ -310,7 +295,7 @@ public class GPSMerge extends JFrame
 
 				textFieldGPXFile.setText(obtainFilePathname(textFieldGPXFile.getText()));
 
-				mp.updateStatusBasedOnGPX(textFieldGPXFile, lblGPXInfo, theMapView);
+				mp.updateStatusBasedOnGPX(textFieldGPXFile, lblStatus, theMapView, image);
 			}
 
 		});
@@ -328,11 +313,15 @@ public class GPSMerge extends JFrame
 				try
 				{
 					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-							textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, lblStatus);
+							textFieldGPXFile.getText(), lblStatus);
 				} 
 				catch (Exception e1)
 				{
+					// Tell the user so s/he can fix it
 					lblStatus.setText(e1.getMessage());
+
+					// Also print the stack trace for diagnosis
+					e1.printStackTrace();
 				}
 			}
 
@@ -378,17 +367,20 @@ public class GPSMerge extends JFrame
 					try
 					{
 						MergeProcessor.updateSourceFilesWithTrackData(gpxTrackFileName, photoDirectoryPath,
-								targetDirectoryName, cameraTimezone, false, theMapView);
+								targetDirectoryName, cameraTimezone, false, theMapView, image);
 
 						// After the update, it is likely that additional files were written to
 						// the target folder. Update the count that shows on the UI.
 						mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-								textFieldGPXFile.getText(), lblSourceInfo, lblTargetInfo, lblStatus);
+								textFieldGPXFile.getText(), lblStatus);
 					} 
 					catch (Exception e1)
 					{
 						// Display the Exception text on the UI for user corrective action.
 						lblStatus.setText(e1.getMessage());
+						
+						// Also print the stack trace for diagnosis
+						e1.printStackTrace();
 					}
 
 				}
