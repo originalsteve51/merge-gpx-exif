@@ -9,7 +9,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -29,6 +28,7 @@ import org.apache.commons.imaging.formats.tiff.taginfos.TagInfo;
 import svptech.gpsmerge.location.GPSLocation;
 import svptech.gpsmerge.location.GPXFileReader;
 import svptech.gpsmerge.views.MergeMapView;
+import svptech.image.utils.RenderImageFromFile;
 import svptech.imaging.utils.ImageManipulationUtils;
 
 /**
@@ -97,7 +97,7 @@ public class MergeProcessor
 	// };
 
 	public static void updateSourceFilesWithTrackData(String gpxTrackFileName, String photoDirectoryPath,
-			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView) throws Exception
+			String targetDirectoryName, String cameraTimezone, boolean debug, MergeMapView theMapView, RenderImageFromFile image) throws Exception
 	{
 		// Make sure the target directory ends with a / character (required later on)
 		if (!targetDirectoryName.endsWith("/"))
@@ -187,6 +187,8 @@ public class MergeProcessor
 					// Add to the list of files changed
 					GPSLocation photolocn = new GPSLocation(takenInstant.toString(), lastPoint.getLatitude(),
 							lastPoint.getLongitude());
+					
+					photolocn.setPhotoFilePathname(targetDirectoryName + photoFile.getName());
 
 					System.out.println("Mapped : " + photolocn);
 					targetPhotoGPSList.add(photolocn);
@@ -201,7 +203,7 @@ public class MergeProcessor
 			if (targetPhotoGPSList.size() > 0)
 			{
 				System.out.println("Scaling and plotting list of size: " + targetPhotoGPSList.size());
-				theMapView.scaleToContainWaypoints(targetPhotoGPSList, true);
+				theMapView.scaleToContainWaypoints(targetPhotoGPSList, true, image);
 			}
 
 		} 
@@ -253,7 +255,16 @@ public class MergeProcessor
 	public static String getWhenTaken(File photoFile) throws ImageReadException, IOException, Exception
 	{
 		// Get all metadata stored in EXIF header
-		ImageMetadata metadata = Imaging.getMetadata(photoFile);
+		ImageMetadata metadata = null;
+		try
+		{
+			metadata = Imaging.getMetadata(photoFile);
+		}
+		catch (ImageReadException ire)
+		{
+			throw new Exception ("ImageReadException : "+photoFile.toString()+" Details: "+ire.getMessage());
+		}
+		
 		String takenTimestamp;
 
 		if (metadata instanceof JpegImageMetadata)
@@ -311,12 +322,9 @@ public class MergeProcessor
 
 		// Get a list of File instances
 		File[] files = srcDirectory.listFiles(new PictureFileFilter());
-		List<File> sourceFiles = Arrays.asList(files);
 
 		int mergeCount = 0;
 
-		// try
-		// {
 		for (File photoFile : files)
 		{
 			Instant instantTaken = getInstantWhenTaken(photoFile, dtf, z);
@@ -325,11 +333,6 @@ public class MergeProcessor
 				mergeCount++;
 			}
 		}
-		// }
-		// catch (Exception e)
-		// {
-		// System.err.println(e);
-		// }
 
 		return mergeCount;
 	}
@@ -380,14 +383,14 @@ public class MergeProcessor
 		return waypoints.size();
 	}
 
-	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel, MergeMapView theMapView)
+	public void updateStatusBasedOnGPX(JTextField gpxFileField, JLabel gpxInfoLabel, MergeMapView theMapView, RenderImageFromFile image)
 	{
 		String gpxStatus = "";
 		try
 		{
 			List<GPSLocation> waypoints = getWaypointsFromFile(gpxFileField.getText());
 			gpxStatus = "GPX file contains " + waypoints.size() + " waypoints.";
-			theMapView.scaleToContainWaypoints(waypoints, false);
+			theMapView.scaleToContainWaypoints(waypoints, false, image);
 		} catch (FileNotFoundException | XMLStreamException e)
 		{
 			// File problem of some kind. Provide an error message and tell user to retry.
@@ -398,33 +401,73 @@ public class MergeProcessor
 	}
 
 	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname,
-			String gpxFilePathname, JLabel lblSourceInfo, JLabel lblTargetInfo, JLabel projectedMergeCount)
+			String gpxFilePathname, JLabel projectedMergeCount)
 			throws Exception
 	{
 
-		int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
-		lblSourceInfo.setText("Folder contains " + srcFileCount + " photo files.");
-
-		int tgtFileCount = countFilesInDirectory(targetDirectoryPathname);
-		lblTargetInfo.setText("Folder contains " + tgtFileCount + " photo files.");
-
-		// When there is a source directory and there is a gpx file, count how many
-		// source photos will be mapped
-		// when a merge is performed. Put this information on the window for the user.
-		if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
+		if (validInputs(sourceDirectoryPathname, targetDirectoryPathname, gpxFilePathname))
 		{
-			// See how many will merge and place the message in the label named
-			// projectedMergeCount
-			// based on timestamp overlap
-			// between the photos and the waypoints
-			int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
-			String projectedAction = "There are " + srcFileCount + " source photo files and " + mergeCount
-					+ " of these will be mapped.";
-			projectedMergeCount.setText(projectedAction);
-		} else
+			int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
+	
+			int tgtFileCount = countFilesInDirectory(targetDirectoryPathname);
+	
+			// When there is a source directory and there is a gpx file, count how many
+			// source photos will be mapped
+			// when a merge is performed. Put this information on the window for the user.
+			if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
+			{
+				// See how many will merge and place the message in the label named
+				// projectedMergeCount
+				// based on timestamp overlap
+				// between the photos and the waypoints
+				int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
+				String projectedAction = mergeCount
+						+ " photos will be tagged.";
+				projectedMergeCount.setText(projectedAction);
+			}
+		}
+		else
 		{
 			projectedMergeCount.setText("");
 		}
+	}
+
+	private boolean validInputs(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname)
+	{
+		boolean allValid = false;
+		
+		if (validDirectory(sourceDirectoryPathname) && validDirectory(targetDirectoryPathname) && validFile(gpxFilePathname))
+		{
+			allValid = true;
+		}
+		
+		return allValid;
+	}
+
+	private boolean validDirectory(String pathname)
+	{
+		boolean validFlag = false;
+		File path;
+		if (pathname != null && pathname.length()!=0)
+		{
+			path = new File(pathname);
+			validFlag = path.exists() && path.isDirectory();
+		}
+		
+		return validFlag;
+	}
+
+	private boolean validFile(String pathname)
+	{
+		boolean validFlag = false;
+		File path;
+		if (pathname != null && pathname.length()!=0)
+		{
+			path = new File(pathname);
+			validFlag = path.exists() && path.isFile();
+		}
+		
+		return validFlag;
 	}
 
 	private int countFilesInDirectory(String targetDirectoryPathname)
