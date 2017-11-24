@@ -2,6 +2,7 @@ package svptech.gpsmerge.views;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.teamdev.jxmaps.ControlPosition;
@@ -26,6 +27,8 @@ public class MergeMapView extends MapView
 	private static final long serialVersionUID = 1L;
 	private static List<Marker> allMarkers = new ArrayList<>();
 	private static int markerCounter = 0;
+	
+	private HashMap<Integer, GPSLocation> locations = new HashMap();
 
 	public MergeMapView()
 	{
@@ -116,26 +119,38 @@ public class MergeMapView extends MapView
 			// tags are added when the GPX path points are plotted.
 			if (plotEveryWaypoint)
 			{
-				String infoTag = makeInfoWindowContent(false);
-
-				InfoWindow info = new InfoWindow(map);
-				info.setContent(infoTag);
-				info.open(map, aMarker);
-				aMarker.setTitle(p.getPhotoFilePathname());
+//				String infoTag = makeInfoWindowContent(false);
+//				InfoWindow info = new InfoWindow(map);
+//				info.setContent(infoTag);
+//				info.open(map, aMarker);
+//				aMarker.setTitle(p.getPhotoFilePathname());
+				
+				// Save all of the plotted waypoints in a map with the marker hashcodes as
+				// the keys.
+				// When a marker is clicked, the associated waypoint and all its data can be
+				// retrieved from the map.
+				locations.put(aMarker.hashCode(), p);
+				
+				// Save the time the picture was taken as its title. This is seen as flyover text.
+				aMarker.setTitle(p.getLocationTime().toString());
+				p.setzIndex(aMarker);
 
 				aMarker.addEventListener("click", new MapMouseEvent()
 				{
 					@Override
 					public void onEvent(MouseEvent mouseEvent)
 					{
-						System.out.println(aMarker.getTitle());
 						try
 						{
-							image.setImageFilePathname(aMarker.getTitle());
+							int markerId = aMarker.hashCode();
+							GPSLocation plotInfo = locations.get(markerId);
+							
+							image.setImageFilePathname(plotInfo.getPhotoFilePathname());
+							plotInfo.setzIndex(aMarker);
+						
 						} 
 						catch (IOException e)
 						{
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}

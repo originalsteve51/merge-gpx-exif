@@ -2,6 +2,7 @@ package svptech.gpsmerge.views;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -248,9 +249,11 @@ public class GPSMerge extends JFrame
 		setFocusTraversalPolicy(new FocusTraversalOnArray(new Component[]
 		{ textFieldSourceFolder, btnBrowseSrcFolder, textFieldGPXFile, btnBrowseGPXFile, textFieldTargetFolder,
 				btnBrowseTargetFolder, comboBoxTZ, btnMergeGpsLocations }));
-		
+
 		pnlImage.add(image);
 		pnlImage.setVisible(true);
+		
+
 
 
 	}
