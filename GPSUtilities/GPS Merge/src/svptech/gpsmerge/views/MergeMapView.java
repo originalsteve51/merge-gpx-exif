@@ -2,6 +2,7 @@ package svptech.gpsmerge.views;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -103,8 +104,24 @@ public class MergeMapView extends MapView
 		// Sort the waypoints where photos were taken by time taken, then decorate each
 		// waypoint with an
 		// ordinal flag that shows the order in which they were taken.
-		waypoints.stream().sorted((w1, w2) -> w1.getLocationTime().compareTo(w2.getLocationTime()))
-				.forEach(p -> plotWaypoint(p, map, plotpointCount, plotEveryWaypoint, image));
+		waypoints.stream()
+				 .sorted((w1, w2) -> w1.getLocationTime().compareTo(w2.getLocationTime()))
+				 .forEach(p -> plotWaypoint(p, map, plotpointCount, plotEveryWaypoint, image));
+		
+		// All waypoints are plotted. Display the first image as though the user clicked on its marker.
+		GPSLocation firstWaypt = waypoints.get(0);
+		if (firstWaypt!=null)
+		{
+			try
+			{
+				image.setImageFilePathname(firstWaypt.getPhotoFilePathname());
+				firstWaypt.setzIndex(firstWaypt.getTheMarker());
+			} 
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private void plotWaypoint(GPSLocation p, Map map, double plotpointCount, boolean plotEveryWaypoint, RenderImageFromFile image)

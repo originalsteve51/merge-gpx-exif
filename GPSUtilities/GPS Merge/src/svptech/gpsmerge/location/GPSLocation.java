@@ -11,6 +11,7 @@ public class GPSLocation
 {
 	private String photoFilePathname;
 	private double zIndex;
+	private Marker theMarker;
 	
 	// We need the time zone used by the camera for its local timestamps.
 	static final ZoneId z = ZoneId.of( "America/Montreal" );
@@ -79,6 +80,17 @@ public class GPSLocation
 		return zIndex;
 	}
 
+	/**
+	 * A GPSLocation encapsulates geo data about a photo along with information pertaining
+	 * to its display on a Map. It is displayed using a Marker on the Map. The Marker has a
+	 * z-index that controls how other objects and it overlay each other on the Map when they
+	 * overlap. The application allows a user to click Markers to cause the associated photo to
+	 * be displayed in a small viewer. When a Marker is clicked, its z-index is changed to place
+	 * it as the lowest Marker on the Map, so it cannot overlay any others. This allows
+	 * close Markers to be clicked, revealing their photo, and also revealing any Markers
+	 * that lie beneath them.
+	 * @param aMarker
+	 */
 	public void setzIndex(Marker aMarker)
 	{
 		// Use the system time millis (negated) as the z index for map markers. 
@@ -91,6 +103,21 @@ public class GPSLocation
 		aMarker.setZIndex(zIndex);
 
 		this.zIndex = zIndex;
+		this.setTheMarker(aMarker);
+	}
+
+	public Marker getTheMarker()
+	{
+		return theMarker;
+	}
+
+	/**
+	 * The marker is only set when the zIndex is set.
+	 * @param theMarker
+	 */
+	private void setTheMarker(Marker theMarker)
+	{
+		this.theMarker = theMarker;
 	}
 
 }
