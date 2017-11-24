@@ -2,7 +2,6 @@ package svptech.gpsmerge.views;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -167,7 +166,7 @@ public class GPSMerge extends JFrame
 		lblStatus = new JLabel(" ");
 		
 		pnlImage = new JPanel();
-		pnlImage.setBackground(Color.GRAY);
+		pnlImage.setBackground(UIManager.getColor("Button.background"));
 		
 		image = new RenderImageFromFile();
 
@@ -271,20 +270,20 @@ public class GPSMerge extends JFrame
 
 				textFieldSourceFolder.setText(obtainFolderPathname(textFieldSourceFolder.getText()));
 
-				try
-				{
-					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-							textFieldGPXFile.getText(), lblStatus);
-					
-				} 
-				catch (Exception e1)
-				{
-					// Tell the user so s/he can fix this
-					lblStatus.setText(e1.getMessage());
-
-					// Also print the stack trace for diagnosis
-					e1.printStackTrace();
-				}
+//				try
+//				{
+//					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+//							textFieldGPXFile.getText(), lblStatus);
+//					
+//				} 
+//				catch (Exception e1)
+//				{
+//					// Tell the user so s/he can fix this
+//					lblStatus.setText(e1.getMessage());
+//
+//					// Also print the stack trace for diagnosis
+//					e1.printStackTrace();
+//				}
 			}
 		});
 
@@ -313,19 +312,19 @@ public class GPSMerge extends JFrame
 
 				textFieldTargetFolder.setText(obtainFolderPathname(textFieldTargetFolder.getText()));
 
-				try
-				{
-					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-							textFieldGPXFile.getText(), lblStatus);
-				} 
-				catch (Exception e1)
-				{
-					// Tell the user so s/he can fix it
-					lblStatus.setText(e1.getMessage());
-
-					// Also print the stack trace for diagnosis
-					e1.printStackTrace();
-				}
+//				try
+//				{
+//					mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+//							textFieldGPXFile.getText(), lblStatus);
+//				} 
+//				catch (Exception e1)
+//				{
+//					// Tell the user so s/he can fix it
+//					lblStatus.setText(e1.getMessage());
+//
+//					// Also print the stack trace for diagnosis
+//					e1.printStackTrace();
+//				}
 			}
 
 		});
@@ -374,8 +373,8 @@ public class GPSMerge extends JFrame
 
 						// After the update, it is likely that additional files were written to
 						// the target folder. Update the count that shows on the UI.
-						mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
-								textFieldGPXFile.getText(), lblStatus);
+//						mp.updateDirectoryPhotoCount(textFieldSourceFolder.getText(), textFieldTargetFolder.getText(),
+//								textFieldGPXFile.getText(), lblStatus);
 					} 
 					catch (Exception e1)
 					{

@@ -400,97 +400,97 @@ public class MergeProcessor
 		gpxInfoLabel.setText(gpxStatus);
 	}
 
-	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname,
-			String gpxFilePathname, JLabel projectedMergeCount)
-			throws Exception
-	{
+//	public void updateDirectoryPhotoCount(String sourceDirectoryPathname, String targetDirectoryPathname,
+//			String gpxFilePathname, JLabel projectedMergeCount)
+//			throws Exception
+//	{
+//
+//		if (validInputs(sourceDirectoryPathname, targetDirectoryPathname, gpxFilePathname))
+//		{
+//			int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
+//	
+//			int tgtFileCount = countFilesInDirectory(targetDirectoryPathname);
+//	
+//			// When there is a source directory and there is a gpx file, count how many
+//			// source photos will be mapped
+//			// when a merge is performed. Put this information on the window for the user.
+//			if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
+//			{
+//				// See how many will merge and place the message in the label named
+//				// projectedMergeCount
+//				// based on timestamp overlap
+//				// between the photos and the waypoints
+//				int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
+//				String projectedAction = mergeCount
+//						+ " photos will be tagged.";
+//				projectedMergeCount.setText(projectedAction);
+//			}
+//		}
+//		else
+//		{
+//			projectedMergeCount.setText("");
+//		}
+//	}
 
-		if (validInputs(sourceDirectoryPathname, targetDirectoryPathname, gpxFilePathname))
-		{
-			int srcFileCount = countFilesInDirectory(sourceDirectoryPathname);
-	
-			int tgtFileCount = countFilesInDirectory(targetDirectoryPathname);
-	
-			// When there is a source directory and there is a gpx file, count how many
-			// source photos will be mapped
-			// when a merge is performed. Put this information on the window for the user.
-			if (srcFileCount != 0 && getWaypointCount(gpxFilePathname) != 0)
-			{
-				// See how many will merge and place the message in the label named
-				// projectedMergeCount
-				// based on timestamp overlap
-				// between the photos and the waypoints
-				int mergeCount = getProjectedMergeCount(gpxFilePathname, sourceDirectoryPathname);
-				String projectedAction = mergeCount
-						+ " photos will be tagged.";
-				projectedMergeCount.setText(projectedAction);
-			}
-		}
-		else
-		{
-			projectedMergeCount.setText("");
-		}
-	}
+//	private boolean validInputs(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname)
+//	{
+//		boolean allValid = false;
+//		
+//		if (validDirectory(sourceDirectoryPathname) && validDirectory(targetDirectoryPathname) && validFile(gpxFilePathname))
+//		{
+//			allValid = true;
+//		}
+//		
+//		return allValid;
+//	}
 
-	private boolean validInputs(String sourceDirectoryPathname, String targetDirectoryPathname, String gpxFilePathname)
-	{
-		boolean allValid = false;
-		
-		if (validDirectory(sourceDirectoryPathname) && validDirectory(targetDirectoryPathname) && validFile(gpxFilePathname))
-		{
-			allValid = true;
-		}
-		
-		return allValid;
-	}
+//	private boolean validDirectory(String pathname)
+//	{
+//		boolean validFlag = false;
+//		File path;
+//		if (pathname != null && pathname.length()!=0)
+//		{
+//			path = new File(pathname);
+//			validFlag = path.exists() && path.isDirectory();
+//		}
+//		
+//		return validFlag;
+//	}
+//
+//	private boolean validFile(String pathname)
+//	{
+//		boolean validFlag = false;
+//		File path;
+//		if (pathname != null && pathname.length()!=0)
+//		{
+//			path = new File(pathname);
+//			validFlag = path.exists() && path.isFile();
+//		}
+//		
+//		return validFlag;
+//	}
 
-	private boolean validDirectory(String pathname)
-	{
-		boolean validFlag = false;
-		File path;
-		if (pathname != null && pathname.length()!=0)
-		{
-			path = new File(pathname);
-			validFlag = path.exists() && path.isDirectory();
-		}
-		
-		return validFlag;
-	}
-
-	private boolean validFile(String pathname)
-	{
-		boolean validFlag = false;
-		File path;
-		if (pathname != null && pathname.length()!=0)
-		{
-			path = new File(pathname);
-			validFlag = path.exists() && path.isFile();
-		}
-		
-		return validFlag;
-	}
-
-	private int countFilesInDirectory(String targetDirectoryPathname)
-	{
-		File tgtFile = new File(targetDirectoryPathname);
-
-		File[] files = tgtFile.listFiles(new PictureFileFilter());
-		int fileCount = 0;
-		if (files != null)
-		{
-			fileCount = files.length;
-		}
-		return fileCount;
-	}
+//	private int countFilesInDirectory(String targetDirectoryPathname)
+//	{
+//		File tgtFile = new File(targetDirectoryPathname);
+//
+//		File[] files = tgtFile.listFiles(new PictureFileFilter());
+//		int fileCount = 0;
+//		if (files != null)
+//		{
+//			fileCount = files.length;
+//		}
+//		return fileCount;
+//	}
 
 	public String getCameraTimezone()
 	{
 		return cameraTimezone;
 	}
 
-	public void setCameraTimezone(String cameraTimezone)
+	public void setCameraTimezone(String aCameraTimezone)
 	{
-		this.cameraTimezone = cameraTimezone;
+		cameraTimezone = aCameraTimezone;
 	}
 
 }
