@@ -64,29 +64,45 @@ public class RenderImageFromFile extends Component
 		return imageFilePathname;
 	}
 
-	public void setImageFilePathname(String imageFilePathname) throws IOException
+	/**
+	 * When a non-null filename of non-zero length is passed, save the filename and
+	 * attempt to render the file as a scaled image on the window. If an obviously bad filename is passed,
+	 * handle as a non-serious error and simply don't paint the image. 
+	 * @param imageFilePathname
+	 */
+	public void setImageFilePathname(String imageFilePathname)
 	{
-		this.imageFilePathname = imageFilePathname;
-
-		img = ImageIO.read(new File(imageFilePathname));
-
-		// The natural size of the image is likely to be wrong, so it needs to be
-		// scaled.
-		// To maintain the aspect, compute the ratio width/height
-		aspect = new Double(img.getWidth()) / new Double(img.getHeight());
-
-		// Make it fit without distortion...
-		computedHeight = new Double(width / aspect).intValue();
-		
-		if (computedHeight>600)
+		if (imageFilePathname!=null && imageFilePathname.length()>0)
 		{
-			computedHeight = 600;
-			width = new Double(computedHeight * aspect).intValue();
+			this.imageFilePathname = imageFilePathname;
+	
+			try
+			{
+				img = ImageIO.read(new File(imageFilePathname));
+				// The natural size of the image is likely to be wrong, so it needs to be
+				// scaled.
+				// To maintain the aspect, compute the ratio width/height
+				aspect = new Double(img.getWidth()) / new Double(img.getHeight());
+	
+				// Make it fit without distortion...
+				computedHeight = new Double(width / aspect).intValue();
+				
+				if (computedHeight>600)
+				{
+					computedHeight = 600;
+					width = new Double(computedHeight * aspect).intValue();
+				}
+	
+				scaledImage = img.getScaledInstance(width, computedHeight, Image.SCALE_DEFAULT);
+				revalidate();
+				repaint();
+			} 
+			catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
-		scaledImage = img.getScaledInstance(width, computedHeight, Image.SCALE_DEFAULT);
-		revalidate();
-		repaint();
 
 	}
 

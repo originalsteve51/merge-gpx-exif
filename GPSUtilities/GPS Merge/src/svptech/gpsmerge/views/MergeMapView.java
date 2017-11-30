@@ -1,13 +1,10 @@
 package svptech.gpsmerge.views;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import com.teamdev.jxmaps.ControlPosition;
-import com.teamdev.jxmaps.InfoWindow;
 import com.teamdev.jxmaps.LatLng;
 import com.teamdev.jxmaps.LatLngBounds;
 import com.teamdev.jxmaps.Map;
@@ -29,7 +26,7 @@ public class MergeMapView extends MapView
 	private static List<Marker> allMarkers = new ArrayList<>();
 	private static int markerCounter = 0;
 	
-	private HashMap<Integer, GPSLocation> locations = new HashMap();
+	private HashMap<Integer, GPSLocation> locations = new HashMap<>();
 
 	public MergeMapView()
 	{
@@ -110,17 +107,11 @@ public class MergeMapView extends MapView
 		
 		// All waypoints are plotted. Display the first image as though the user clicked on its marker.
 		GPSLocation firstWaypt = waypoints.get(0);
-		if (firstWaypt!=null)
+		if (firstWaypt != null && firstWaypt.getPhotoFilePathname() != null
+				&& firstWaypt.getPhotoFilePathname().length() > 0)
 		{
-			try
-			{
-				image.setImageFilePathname(firstWaypt.getPhotoFilePathname());
-				firstWaypt.setzIndex(firstWaypt.getTheMarker());
-			} 
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+			image.setImageFilePathname(firstWaypt.getPhotoFilePathname());
+			firstWaypt.setzIndex(firstWaypt.getTheMarker());
 		}
 	}
 
@@ -157,19 +148,12 @@ public class MergeMapView extends MapView
 					@Override
 					public void onEvent(MouseEvent mouseEvent)
 					{
-						try
-						{
-							int markerId = aMarker.hashCode();
-							GPSLocation plotInfo = locations.get(markerId);
-							
-							image.setImageFilePathname(plotInfo.getPhotoFilePathname());
-							plotInfo.setzIndex(aMarker);
-						
-						} 
-						catch (IOException e)
-						{
-							e.printStackTrace();
-						}
+						int markerId = aMarker.hashCode();
+						GPSLocation plotInfo = locations.get(markerId);
+
+						image.setImageFilePathname(plotInfo.getPhotoFilePathname());
+						plotInfo.setzIndex(aMarker);
+
 					}
 				});
 			}
